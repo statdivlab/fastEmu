@@ -140,7 +140,7 @@ fastEmuTest <- function(model = "full",
 
   # set constraints
   # reorder categories in Y so that constraint categories are in the beginning
-  new_order <- c(constraint_cats, (1:ncol(Y))[-constraint_cats])
+  new_order <- c(constraint_cats, test_kj$j, (1:ncol(Y))[-c(constraint_cats, test_kj$j)])
   # set constraint as single category constraint if there is one value in constraint_cats
   if (length(constraint_cats) == 1) {
     constraint_fn_sub <- (function(x) x[1])
@@ -169,7 +169,7 @@ fastEmuTest <- function(model = "full",
       ind_keep <- c(ind_keep, which(categories_in_model ==
                                       categories_in_model[test_kj$j]))
     }
-    ind_keep <- (unique(ind_keep))[new_order]
+    ind_keep <- unique(ind_keep)
     mod_Y <- Y[, ind_keep]
     if (sum(rowSums(mod_Y) == 0) > 0) {
       stop("There is at least one observation with no counts across the categories included in this model. Please update the categories included in this model so that every observation has at least one count.")
@@ -180,48 +180,55 @@ fastEmuTest <- function(model = "full",
       ind_keep <- c(ind_keep, which(categories_in_model ==
                                       categories_in_model[test_kj$j]))
     }
-    other_cat_sum <- colSums(Y[, -ind_keep])
-    ind_keep <- (unique(ind_keep))[new_order]
+    ind_keep <- unique(ind_keep)
+    other_cat_sum <- rowSums(Y[, -ind_keep])
     mod_Y <- cbind(Y[, ind_keep], other_cat_sum)
   } else {
     stop("Please use 'full', 'drop', or 'agg' for method argument.")
   }
 
-  emuObj <- emuFit(mod_Y,
-                   X = NULL,
-                   formula = NULL,
-                   data = NULL,
-                   cluster = NULL,
-                   penalize = TRUE,
-                   B = NULL,
-                   fitted_model = NULL,
-                   refit = TRUE,
-                   test_kj = NULL,
-                   alpha = 0.05,
-                   return_wald_p = FALSE,
-                   compute_cis = TRUE,
-                   run_score_tests = TRUE,
-                   use_fullmodel_info = FALSE,
-                   use_fullmodel_cov = FALSE,
-                   use_both_cov = FALSE,
+  emuObj <- emuFit(Y = mod_Y,
+                   X = X,
+                   formula = formula,
+                   data = data,
+                   cluster = cluster,
+                   penalize = penalize,
+                   B = B,
+                   fitted_model = fitted_model,
+                   refit = refit,
+                   test_kj = data.frame(k = test_kj$k,
+                                        j = which(new_order == test_kj$j)),
+                   alpha = alpha,
+                   return_wald_p = return_wald_p,
+                   compute_cis = compute_cis,
+                   run_score_tests = run_score_tests,
+                   use_fullmodel_info = use_fullmodel_info,
+                   use_fullmodel_cov = use_fullmodel_cov,
+                   use_both_cov = use_both_cov,
                    constraint_fn = constraint_fn_sub,
                    constraint_grad_fn = constraint_grad_fn_sub,
                    constraint_param = NA,
-                   verbose = FALSE,
-                   tolerance = 1e-4,
-                   B_null_tol = 1e-3,
-                   rho_init = 1,
-                   inner_tol = 1,
-                   ntries = 4,
-                   tau = 2,
-                   kappa = 0.8,
-                   constraint_tol = 1e-5,
-                   c1 = 1e-4,
-                   maxit = 1000,
-                   inner_maxit = 25,
-                   max_step = 1,
-                   trackB = FALSE,
-                   return_both_score_pvals = FALSE)
+                   verbose = verbose,
+                   tolerance = tolerance,
+                   B_null_tol = B_null_tol,
+                   rho_init = rho_init,
+                   inner_tol = inner_tol,
+                   ntries = ntries,
+                   tau = tau,
+                   kappa = kappa,
+                   constraint_tol = constraint_tol,
+                   c1 = c1,
+                   maxit = maxit,
+                   inner_maxit = inner_maxit,
+                   max_step = max_step,
+                   trackB = trackB,
+                   return_both_score_pvals = return_both_score_pvals)
 
-  return(emuObj)
+  res <- emuObj
+  res$model <- model
+  res$p_vals <- emuObj$coef[which(new_order == test_kj$j),
+                            c("wald_p", "score_pval_null_info",
+                                      "score_pval_full_info")]
+
+  return(res)
 }
