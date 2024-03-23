@@ -226,9 +226,10 @@ fastEmuTest <- function(model = "full",
 
   res <- emuObj
   res$model <- model
-  res$p_vals <- emuObj$coef[which(new_order == test_kj$j),
-                            c("wald_p", "score_pval_null_info",
-                                      "score_pval_full_info")]
+  pval_cols <- which(stringr::str_detect(names(emuObj$coef), "pval") |
+                       stringr::str_detect(names(emuObj$coef), "_p"))
+  res$p_vals <- emuObj$coef[which(new_order == test_kj$j), pval_cols,
+                            drop = FALSE]
 
   return(res)
 }

@@ -36,7 +36,7 @@ test_that("test-fastEmuTest works", {
                           use_both_cov = FALSE,
                           use_fullmodel_info = TRUE,
                           return_both_score_pvals = TRUE)
-  expect_false(is.na(res_full$p_vals[3]))
+  expect_false(is.na(res_full$p_vals$score_pval_null_info))
 
   # run dropped model
   # run dropped model, cat categories as constaint, test 100th
@@ -53,7 +53,7 @@ test_that("test-fastEmuTest works", {
                          use_both_cov = FALSE,
                          use_fullmodel_info = TRUE,
                          return_both_score_pvals = TRUE)
-  expect_false(is.na(res_drop$p_vals[3]))
+  expect_false(is.na(res_drop$p_vals$score_pval_null_info))
 
   # run aggregated model
   # run aggregated model, cat categories as constaint, test 100th
@@ -70,7 +70,7 @@ test_that("test-fastEmuTest works", {
                           use_both_cov = FALSE,
                           use_fullmodel_info = TRUE,
                           return_both_score_pvals = TRUE)
-  expect_false(is.na(res_agg$p_vals[3]))
+  expect_false(is.na(res_agg$p_vals$score_pval_null_info))
 
   # the correct number of categories are included for each model
   expect_true(nrow(res_full$coef) == ncol(Y) &
@@ -99,6 +99,6 @@ test_that("test-fastEmuTest works", {
                                use_fullmodel_info = TRUE,
                                return_both_score_pvals = TRUE)
   expect_true(nrow(res_drop_more$coef) == (1 + length(cats) + length(cats_to_add)))
-  expect_false(is.na(res_drop_more$p_vals[3]))
+  expect_false(is.na(res_drop_more$p_vals$score_pval_null_info))
 
 })
