@@ -7,7 +7,8 @@ test_that("test-fastEmuTest works", {
   J <- 200
   b0 <- rnorm(J)
   b1 <- rnorm(J)
-  X <- cbind(1, rep(c(0, 1), each = n/2))
+  X <- cbind(1, rep(c(0, 1), each = n/2),
+             rnorm(n))
   Y <- radEmu:::simulate_data(n = n,
                               J = J,
                               b0 = b0,
@@ -27,7 +28,7 @@ test_that("test-fastEmuTest works", {
                           constraint_cats = cats,
                           Y = Y,
                           X = X,
-                          test_kj = data.frame(k = 2, j = 100),
+                          test_kj = data.frame(k = 2:3, j = 100),
                           tau = 2,
                           B_null_tol = 0.005,
                           tolerance = 0.005,
@@ -36,10 +37,10 @@ test_that("test-fastEmuTest works", {
                           use_both_cov = FALSE,
                           use_fullmodel_info = TRUE,
                           return_both_score_pvals = TRUE)
-  expect_false(is.na(res_full$p_vals$score_pval_null_info))
+  expect_false(is.na(res_full$p_vals$score_pval_null_info[1]))
 
   # run dropped model
-  # run dropped model, cat categories as constaint, test 100th
+  # run dropped model, cat categories as constraint, test 100th
   res_drop <- fastEmuTest(model = "drop",
                          constraint_cats = cats,
                          Y = Y,
@@ -73,9 +74,9 @@ test_that("test-fastEmuTest works", {
   expect_false(is.na(res_agg$p_vals$score_pval_null_info))
 
   # the correct number of categories are included for each model
-  expect_true(nrow(res_full$coef) == ncol(Y) &
-                nrow(res_drop$coef) == (1 + length(cats)) &
-                nrow(res_agg$coef) == (2 + length(cats)))
+  expect_true(nrow(res_full$coef) == 2*ncol(Y) &
+                nrow(res_drop$coef) == 2*(1 + length(cats)) &
+                nrow(res_agg$coef) == 2*(2 + length(cats)))
 
   # we can add other categories with the categories_in_model argument
   cats_in_model <- rep(2, ncol(Y))
@@ -98,7 +99,7 @@ test_that("test-fastEmuTest works", {
                                use_both_cov = FALSE,
                                use_fullmodel_info = TRUE,
                                return_both_score_pvals = TRUE)
-  expect_true(nrow(res_drop_more$coef) == (1 + length(cats) + length(cats_to_add)))
+  expect_true(nrow(res_drop_more$coef) == 2*(1 + length(cats) + length(cats_to_add)))
   expect_false(is.na(res_drop_more$p_vals$score_pval_null_info))
 
 })

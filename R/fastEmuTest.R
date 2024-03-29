@@ -129,18 +129,24 @@ fastEmuTest <- function(model = "full",
                         trackB = FALSE,
                         return_both_score_pvals = FALSE) {
 
-  # currently only implemented for a single score test
-  if (nrow(test_kj) > 1) {
-    stop("Currently testing is not implemented for more than one parameter")
+  # currently only implemented for a single category
+  if (length(unique(test_kj$j)) > 1) {
+    stop("Currently testing is not implemented for more than one category at once")
   }
   # currently only implemented for testing j not in constraint set
-  if (test_kj$j %in% constraint_cats) {
+  if (test_kj$j[1] %in% constraint_cats) {
     stop("Currently testing is not implemented for categories included in the constraint.")
   }
 
+  # add category names if they aren't already there
+  if (is.null(colnames(Y))) {
+    colnames(Y) <- paste0("category", 1:ncol(Y))
+  }
+  test_cat <- colnames(Y)[test_kj$j[1]]
+
   # set constraints
   # reorder categories in Y so that constraint categories are in the beginning
-  new_order <- c(constraint_cats, test_kj$j, (1:ncol(Y))[-c(constraint_cats, test_kj$j)])
+  new_order <- c(constraint_cats, test_kj$j[1], (1:ncol(Y))[-c(constraint_cats, test_kj$j[1])])
   # set constraint as single category constraint if there is one value in constraint_cats
   if (length(constraint_cats) == 1) {
     constraint_fn_sub <- (function(x) x[1])
@@ -164,10 +170,10 @@ fastEmuTest <- function(model = "full",
   if (model == "full") {
     mod_Y <- Y[, new_order]
   } else if (model == "drop") {
-    ind_keep <- c(constraint_cats, test_kj$j)
+    ind_keep <- c(constraint_cats, test_kj$j[1])
     if (!is.null(categories_in_model)) {
       ind_keep <- c(ind_keep, which(categories_in_model ==
-                                      categories_in_model[test_kj$j]))
+                                      categories_in_model[test_kj$j[1]]))
     }
     ind_keep <- unique(ind_keep)
     mod_Y <- Y[, ind_keep]
@@ -175,10 +181,10 @@ fastEmuTest <- function(model = "full",
       stop("There is at least one observation with no counts across the categories included in this model. Please update the categories included in this model so that every observation has at least one count.")
     }
   } else if (model == "agg") {
-    ind_keep <- c(constraint_cats, test_kj$j)
+    ind_keep <- c(constraint_cats, test_kj$j[1])
     if (!is.null(categories_in_model)) {
       ind_keep <- c(ind_keep, which(categories_in_model ==
-                                      categories_in_model[test_kj$j]))
+                                      categories_in_model[test_kj$j[1]]))
     }
     ind_keep <- unique(ind_keep)
     other_cat_sum <- rowSums(Y[, -ind_keep])
@@ -197,7 +203,7 @@ fastEmuTest <- function(model = "full",
                    fitted_model = fitted_model,
                    refit = refit,
                    test_kj = data.frame(k = test_kj$k,
-                                        j = which(new_order == test_kj$j)),
+                                        j = which(new_order == test_kj$j[1])),
                    alpha = alpha,
                    return_wald_p = return_wald_p,
                    compute_cis = compute_cis,
@@ -228,7 +234,9 @@ fastEmuTest <- function(model = "full",
   res$model <- model
   pval_cols <- which(stringr::str_detect(names(emuObj$coef), "pval") |
                        stringr::str_detect(names(emuObj$coef), "_p"))
-  res$p_vals <- emuObj$coef[which(new_order == test_kj$j), pval_cols,
+  covs <- unique(emuObj$coef$covariate)
+  res$p_vals <- emuObj$coef[emuObj$coef$category == test_cat &
+                              emuObj$coef$covariate %in% covs[test_kj$k - 1], pval_cols,
                             drop = FALSE]
 
   return(res)
