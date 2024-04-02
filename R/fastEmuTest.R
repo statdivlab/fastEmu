@@ -4,8 +4,6 @@
 #' a conditional joint model, or "agg" to run score tests with a joint marginal model
 #' @param constraint_cats a vector of category indices for categories that should be involved in the constraint
 #' and retained in any smaller joint model
-#' @param categories_in_model optional vector of length \code{J} giving indices of models in which categories should
-#' be included in. Use \code{0} to denote categories in the constraint to be used in every model.
 #' @param Y an n x J matrix or dataframe of nonnegative observations, or a phyloseq object containing an otu table and sample data.
 #' @param X an n x p matrix or dataframe of covariates (optional)
 #' @param formula a one-sided formula specifying the form of the mean model to be fit
@@ -92,7 +90,6 @@
 #'
 fastEmuTest <- function(model = "full",
                         constraint_cats,
-                        categories_in_model = NULL,
                         Y,
                         X = NULL,
                         formula = NULL,
@@ -128,6 +125,10 @@ fastEmuTest <- function(model = "full",
                         max_step = 1,
                         trackB = FALSE,
                         return_both_score_pvals = FALSE) {
+
+  if (sum(rowSums(Y) == 0) > 0) {
+    stop("There is at least one sample with no counts in any category. Please remove samples that have no counts in any category.")
+  }
 
   # currently only implemented for a single category
   if (length(unique(test_kj$j)) > 1) {
@@ -166,26 +167,32 @@ fastEmuTest <- function(model = "full",
     })
   }
 
+  added_cats <- NULL
+
   # update model based on model chosen and categories to use
   if (model == "full") {
     mod_Y <- Y[, new_order]
   } else if (model == "drop") {
     ind_keep <- c(constraint_cats, test_kj$j[1])
-    if (!is.null(categories_in_model)) {
-      ind_keep <- c(ind_keep, which(categories_in_model ==
-                                      categories_in_model[test_kj$j[1]]))
-    }
     ind_keep <- unique(ind_keep)
     mod_Y <- Y[, ind_keep]
     if (sum(rowSums(mod_Y) == 0) > 0) {
-      stop("There is at least one observation with no counts across the categories included in this model. Please update the categories included in this model so that every observation has at least one count.")
+      message("There is at least one observation with no counts across the categories included in this model. Additional categories will be added to the model")
+      count_df <- data.frame(id = (1:ncol(Y))[-ind_keep],
+                             counts = colSums(Y)[-ind_keep])
+      count_df$rank <- rank(-count_df$counts, ties.method = "first")
+      added_cats <- c()
+      curr_rank <- 1
+      while (sum(rowSums(mod_Y) == 0) > 0) {
+        cat <- count_df$id[count_df$rank == curr_rank]
+        ind_keep <- c(ind_keep, cat)
+        mod_Y <- Y[, ind_keep]
+        added_cats <- c(added_cats, cat)
+        curr_rank <- curr_rank + 1
+      }
     }
   } else if (model == "agg") {
     ind_keep <- c(constraint_cats, test_kj$j[1])
-    if (!is.null(categories_in_model)) {
-      ind_keep <- c(ind_keep, which(categories_in_model ==
-                                      categories_in_model[test_kj$j[1]]))
-    }
     ind_keep <- unique(ind_keep)
     other_cat_sum <- rowSums(Y[, -ind_keep])
     mod_Y <- cbind(Y[, ind_keep], other_cat_sum)
@@ -238,6 +245,9 @@ fastEmuTest <- function(model = "full",
   res$p_vals <- emuObj$coef[emuObj$coef$category == test_cat &
                               emuObj$coef$covariate %in% covs[test_kj$k - 1], pval_cols,
                             drop = FALSE]
+  if (!is.null(added_cats)) {
+    res$added_cats <- added_cats
+  }
 
   return(res)
 }
