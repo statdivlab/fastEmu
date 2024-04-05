@@ -149,6 +149,9 @@ fastEmuTest <- function(model = "full",
   # reorder categories in Y so that constraint categories are in the beginning
   ind_keep <- c(constraint_cats, test_kj$j[1])
   ind_keep <- unique(ind_keep)
+  if (length(ind_keep) == 1) {
+    stop("If you only have one constraint category, this category cannot also be tested.")
+  }
   new_order <- c(ind_keep, (1:ncol(Y))[-ind_keep])
   # set constraint as single category constraint if there is one value in constraint_cats
   if (length(constraint_cats) == 1) {

@@ -7,7 +7,6 @@
 fastEmuTest(
   model = "full",
   constraint_cats,
-  categories_in_model = NULL,
   Y,
   X = NULL,
   formula = NULL,
@@ -48,9 +47,6 @@ a conditional joint model, or "agg" to run score tests with a joint marginal mod
 
 \item{constraint_cats}{a vector of category indices for categories that should be involved in the constraint
 and retained in any smaller joint model}
-
-\item{categories_in_model}{optional vector of length \code{J} giving indices of models in which categories should
-be included in. Use \code{0} to denote categories in the constraint to be used in every model.}
 
 \item{Y}{an n x J matrix or dataframe of nonnegative observations, or a phyloseq object containing an otu table and sample data.}
 
