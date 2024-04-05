@@ -134,10 +134,10 @@ fastEmuTest <- function(model = "full",
   if (length(unique(test_kj$j)) > 1) {
     stop("Currently testing is not implemented for more than one category at once")
   }
-  # currently only implemented for testing j not in constraint set
-  if (test_kj$j[1] %in% constraint_cats) {
-    stop("Currently testing is not implemented for categories included in the constraint.")
-  }
+  # # currently only implemented for testing j not in constraint set
+  # if (test_kj$j[1] %in% constraint_cats) {
+  #   stop("Currently testing is not implemented for categories included in the constraint.")
+  # }
 
   # add category names if they aren't already there
   if (is.null(colnames(Y))) {
@@ -147,7 +147,9 @@ fastEmuTest <- function(model = "full",
 
   # set constraints
   # reorder categories in Y so that constraint categories are in the beginning
-  new_order <- c(constraint_cats, test_kj$j[1], (1:ncol(Y))[-c(constraint_cats, test_kj$j[1])])
+  ind_keep <- c(constraint_cats, test_kj$j[1])
+  ind_keep <- unique(ind_keep)
+  new_order <- c(ind_keep, (1:ncol(Y))[-ind_keep])
   # set constraint as single category constraint if there is one value in constraint_cats
   if (length(constraint_cats) == 1) {
     constraint_fn_sub <- (function(x) x[1])
@@ -169,12 +171,26 @@ fastEmuTest <- function(model = "full",
 
   added_cats <- NULL
 
+  # check for separation in categorical data, cases in which the baseline category and
+  # category k both only have zeros
+  if (is.null(X)) {
+    if (is.null(formula) | is.null(data)) {
+      stop("If design matrix X not provided, both formula and data containing\ncovariates in formula must be provided.")
+    }
+    X <- model.matrix(formula, data)
+  }
+  if ("data.frame" %in% class(X)) {
+    X <- as.matrix(X)
+    if (!is.numeric(X)) {
+      stop("X is a data frame that cannot be coerced to a numeric matrix. Please fix and try again.")
+    }
+  }
+
+
   # update model based on model chosen and categories to use
   if (model == "full") {
     mod_Y <- Y[, new_order]
   } else if (model == "drop") {
-    ind_keep <- c(constraint_cats, test_kj$j[1])
-    ind_keep <- unique(ind_keep)
     mod_Y <- Y[, ind_keep]
     if (sum(rowSums(mod_Y) == 0) > 0) {
       message("There is at least one observation with no counts across the categories included in this model. Additional categories will be added to the model")
@@ -192,8 +208,6 @@ fastEmuTest <- function(model = "full",
       }
     }
   } else if (model == "agg") {
-    ind_keep <- c(constraint_cats, test_kj$j[1])
-    ind_keep <- unique(ind_keep)
     other_cat_sum <- rowSums(Y[, -ind_keep])
     mod_Y <- cbind(Y[, ind_keep], other_cat_sum)
   } else {
@@ -248,6 +262,5 @@ fastEmuTest <- function(model = "full",
   if (!is.null(added_cats)) {
     res$added_cats <- added_cats
   }
-
   return(res)
 }

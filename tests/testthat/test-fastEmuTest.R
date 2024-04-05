@@ -1,6 +1,7 @@
 test_that("test-fastEmuTest works", {
 
   library(fastEmu)
+  library(radEmu)
 
   # simulate data
   n <- 100
@@ -78,4 +79,19 @@ test_that("test-fastEmuTest works", {
                 nrow(res_drop$coef) == 2*(1 + length(cats)) &
                 nrow(res_agg$coef) == 2*(2 + length(cats)))
 
+  # test category that is included in constraint
+  res_drop2 <- fastEmuTest(model = "drop",
+                          constraint_cats = cats,
+                          Y = Y,
+                          X = X,
+                          test_kj = data.frame(k = 2, j = cats[10]),
+                          tau = 2,
+                          B_null_tol = 0.005,
+                          tolerance = 0.005,
+                          constraint_tol = 0.001,
+                          return_wald_p = TRUE,
+                          use_both_cov = FALSE,
+                          use_fullmodel_info = TRUE,
+                          return_both_score_pvals = TRUE)
+  expect_false(is.na(res_drop$p_vals$score_pval_null_info))
 })
