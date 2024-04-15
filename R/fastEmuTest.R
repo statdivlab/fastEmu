@@ -66,6 +66,8 @@
 #' @param c1 numeric: parameter for Armijo line search. Default is 1e-4.
 #' @param trackB logical: should values of B be recorded across optimization
 #' iterations and be returned? Primarily used for debugging. Default is FALSE.
+#' @param return_nullB logical: should values of B under null hypothesis be returned.
+#' Primarily used for debugging. Default is FALSE.
 #' @param return_both_score_pvals logical: should score p-values be returned using both
 #' information matrix computed from full model fit and from null model fits? Default is
 #' FALSE. This parameter is used for simulations - in any applied analysis, type of
@@ -124,6 +126,7 @@ fastEmuTest <- function(model = "full",
                         inner_maxit = 25,
                         max_step = 1,
                         trackB = FALSE,
+                        return_nullB = FALSE,
                         return_both_score_pvals = FALSE) {
 
   if (sum(rowSums(Y) == 0) > 0) {
@@ -252,6 +255,7 @@ fastEmuTest <- function(model = "full",
                    inner_maxit = inner_maxit,
                    max_step = max_step,
                    trackB = trackB,
+                   return_nullB = return_nullB,
                    return_both_score_pvals = return_both_score_pvals)
 
   res <- emuObj
