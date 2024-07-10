@@ -83,9 +83,7 @@
 #' 'Dy' contain an information matrix and empirical score covariance matrix
 #' computed under the full model.
 #'
-#' @importFrom stats cov median model.matrix optim pchisq qnorm weighted.mean
-#' @import Matrix
-#' @import MASS
+#' @importFrom stats model.matrix
 #' @import radEmu
 #'
 #' @export
