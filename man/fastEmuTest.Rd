@@ -5,7 +5,6 @@
 \title{Fit radEmu model after collapsing data into smaller joint model, runs score tests}
 \usage{
 fastEmuTest(
-  model = "full",
   constraint_cats,
   Y,
   X = NULL,
@@ -39,13 +38,11 @@ fastEmuTest(
   max_step = 1,
   trackB = FALSE,
   return_nullB = FALSE,
-  return_both_score_pvals = FALSE
+  return_both_score_pvals = FALSE,
+  model = NULL
 )
 }
 \arguments{
-\item{model}{either "full" to run score tests with the full joint model, "drop" to run score tests with
-a conditional joint model, or "agg" to run score tests with a joint marginal model}
-
 \item{constraint_cats}{a vector of category indices for categories that should be involved in the constraint
 and retained in any smaller joint model}
 
@@ -149,6 +146,11 @@ Primarily used for debugging. Default is FALSE.}
 information matrix computed from full model fit and from null model fits? Default is
 FALSE. This parameter is used for simulations - in any applied analysis, type of
 p-value to be used should be chosen before conducting tests.}
+
+\item{model}{deprecated argument, default is "drop" to run the reduced model that drops
+all categories not in the constraint or being tested for each score test, "full" to run tests
+with the full joint model (equivalent to radEmu), or "agg" to run a different version of the reduced
+model in which all categories not in the constraint or being tested are aggregated together}
 }
 \value{
 A list containing elements 'coef', 'B', 'penalized', 'Y_augmented',

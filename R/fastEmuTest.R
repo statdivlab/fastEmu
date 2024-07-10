@@ -1,7 +1,5 @@
 #' Fit radEmu model after collapsing data into smaller joint model, runs score tests
 #'
-#' @param model either "full" to run score tests with the full joint model, "drop" to run score tests with
-#' a conditional joint model, or "agg" to run score tests with a joint marginal model
 #' @param constraint_cats a vector of category indices for categories that should be involved in the constraint
 #' and retained in any smaller joint model
 #' @param Y an n x J matrix or dataframe of nonnegative observations, or a phyloseq object containing an otu table and sample data.
@@ -72,6 +70,10 @@
 #' information matrix computed from full model fit and from null model fits? Default is
 #' FALSE. This parameter is used for simulations - in any applied analysis, type of
 #' p-value to be used should be chosen before conducting tests.
+#' @param model deprecated argument, default is "drop" to run the reduced model that drops
+#' all categories not in the constraint or being tested for each score test, "full" to run tests
+#' with the full joint model (equivalent to radEmu), or "agg" to run a different version of the reduced
+#' model in which all categories not in the constraint or being tested are aggregated together
 #'
 #' @return A list containing elements 'coef', 'B', 'penalized', 'Y_augmented',
 #' 'I', and 'Dy'.  Parameter estimates by
@@ -88,8 +90,7 @@
 #'
 #' @export
 #'
-fastEmuTest <- function(model = "full",
-                        constraint_cats,
+fastEmuTest <- function(constraint_cats,
                         Y,
                         X = NULL,
                         formula = NULL,
@@ -125,7 +126,8 @@ fastEmuTest <- function(model = "full",
                         max_step = 1,
                         trackB = FALSE,
                         return_nullB = FALSE,
-                        return_both_score_pvals = FALSE) {
+                        return_both_score_pvals = FALSE,
+                        model = NULL) {
 
   if (sum(rowSums(Y) == 0) > 0) {
     stop("There is at least one sample with no counts in any category. Please remove samples that have no counts in any category.")
@@ -190,7 +192,9 @@ fastEmuTest <- function(model = "full",
     }
   }
 
-
+  if (is.null(model)) {
+    model = "drop"
+  }
   # update model based on model chosen and categories to use
   if (model == "full") {
     mod_Y <- Y[, new_order]
