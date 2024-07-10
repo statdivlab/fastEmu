@@ -4,7 +4,7 @@ Version: 0.0.0.9000
 Authors@R: 
     c(person("Sarah", "Teichman", email = "teichs@uw.edu", role = c("aut", "cre")),
       person("Amy D", "Willis", email = "adwillis@uw.edu", role = "aut", comment = c(ORCID = "0000-0002-2802-4317")))
-Description: Runs scalable robust score tests for the model implemented in radEmu!
+Description: Runs scalable robust score tests for the model implemented in radEmu.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
