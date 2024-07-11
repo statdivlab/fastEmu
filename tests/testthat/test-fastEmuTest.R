@@ -69,6 +69,32 @@ test_that("fastEmu controls Type I error rate when it should", {
   X = cbind(1, rep(0:1, each = n /2))
 
   for (i in 1:nsim) {
+
+    dat <- simulateData(X = X,
+                        B = rbind(bs$b0, bs$b1), distn = "Poisson", mean_count_before_ZI = 50)
+    emu_res <- fastEmuTest(constraint_cats = 1:5, Y = dat, X = X, test_kj = data.frame(k = 2, j = 6),
+                           estimate_full_model = FALSE)
+    ps[i] <- emu_res$coef$pval
+  }
+
+  expect_true(mean(ps <= 0.05) < 0.05 + 1.96 * sqrt(0.05 * 0.95 / nsim))
+
+})
+
+test_that("fastEmu has power that increases with sample size and signal magnitude", {
+
+  skip("skipping this in automatic tests because it is slow")
+
+  n <- 20
+  J <- 10
+  set.seed(1569)
+  nsim <- 100
+  ps <- rep(NA, nsim)
+  bs <- simulateBs(J = J, constraint_cats = 1:5, test_j = 6, constraint_mag = 1,
+                   other_mag = 5, under_null = FALSE, alt_val = 0.1)
+  X = cbind(1, rep(0:1, each = n /2))
+
+  for (i in 1:nsim) {
     print(i)
     dat <- simulateData(X = X,
                         B = rbind(bs$b0, bs$b1), distn = "Poisson", mean_count_before_ZI = 50)
@@ -77,11 +103,23 @@ test_that("fastEmu controls Type I error rate when it should", {
     ps[i] <- emu_res$coef$pval
   }
 
-})
+  n <- 50
+  set.seed(1570)
+  nsim <- 100
+  new_ps <- rep(NA, nsim)
+  bs <- simulateBs(J = J, constraint_cats = 1:5, test_j = 6, constraint_mag = 1,
+                   other_mag = 5, under_null = FALSE, alt_val = 1)
+  X = cbind(1, rep(0:1, each = n /2))
 
-test_that("fastEmu has power that increases with sample size and signal magnitude", {
+  for (i in 1:nsim) {
+    print(i)
+    dat <- simulateData(X = X,
+                        B = rbind(bs$b0, bs$b1), distn = "Poisson", mean_count_before_ZI = 50)
+    emu_res <- fastEmuTest(constraint_cats = 1:5, Y = dat, X = X, test_kj = data.frame(k = 2, j = 6),
+                           estimate_full_model = FALSE)
+    new_ps[i] <- emu_res$coef$pval
+  }
 
-  skip("skipping this in automatic tests because it is slow")
-
+  expect_true(mean(ps <= 0.05) < mean(new_ps <= 0.05))
 
 })
