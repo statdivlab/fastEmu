@@ -1,5 +1,5 @@
 Package: fastEmu
-Title: Runs Scalable Robust Score Tests for the Model Implemented in radEmu
+Title: Fast Robust Score Tests for the Simplified Version of Model Implemented in radEmu
 Version: 0.0.0.9000
 Authors@R: 
     c(person("Sarah", "Teichman", email = "teichs@uw.edu", role = c("aut", "cre")),

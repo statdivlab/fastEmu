@@ -1,154 +1,56 @@
-test_that("test-fastEmuTest works", {
+n <- 50
+J <- 10
+b0 <- rnorm(J)
+b1 <- rnorm(J)
+X <- cbind(1, rep(0:1, each = n / 2))
+Y <- simulateData(X, rbind(b0, b1), distn = "Poisson", mean_count_before_ZI = 50)
 
-  library(fastEmu)
-  library(radEmu)
+test_that("radEmu and fastEmu give same results when using full model and all categories in constraint", {
 
-  # simulate data
-  n <- 100
-  J <- 200
-  b0 <- rnorm(J)
-  b1 <- rnorm(J)
-  X <- cbind(1, rep(c(0, 1), each = n/2),
-             rnorm(n))
-  Y <- radEmu:::simulate_data(n = n,
-                              J = J,
-                              b0 = b0,
-                              b1 = b1,
-                              distn = "Poisson",
-                              zinb_size = 5,
-                              zinb_zero_prop = 0.6,
-                              mean_count_before_ZI = 50)
-  colnames(Y) <- paste0("category", 1:ncol(Y))
+  radEmu_res <- emuFit(Y, X, test_kj = data.frame(k = 2, j = 6))
+  fastEmu_res <- fastEmuTest(constraint_cats = 1:10, Y = Y, X = X,
+                             test_kj = data.frame(k = 2, j = 6), model = "full")
 
-  # test 100th category
-  # randomly select 25 categories to use as constraint
-  cats <- sample((1:ncol(Y))[-100], 25)
-
-  # run full model, cat categories as constaint, test 100th
-  res_full <- fastEmuTest(model = "full",
-                          constraint_cats = cats,
-                          Y = Y,
-                          X = X,
-                          test_kj = data.frame(k = 2:3, j = 100),
-                          tau = 2,
-                          B_null_tol = 0.005,
-                          tolerance = 0.005,
-                          constraint_tol = 0.001,
-                          return_wald_p = TRUE,
-                          use_both_cov = FALSE,
-                          use_fullmodel_info = TRUE,
-                          return_both_score_pvals = TRUE)
-  expect_false(is.na(res_full$p_vals$score_pval_null_info[1]))
-
-  # run dropped model
-  # run dropped model, cat categories as constraint, test 100th
-  res_drop <- fastEmuTest(model = "drop",
-                         constraint_cats = cats,
-                         Y = Y,
-                         X = X,
-                         test_kj = data.frame(k = 2, j = 100),
-                         tau = 2,
-                         B_null_tol = 0.005,
-                         tolerance = 0.005,
-                         constraint_tol = 0.001,
-                         return_wald_p = TRUE,
-                         use_both_cov = FALSE,
-                         use_fullmodel_info = TRUE,
-                         return_both_score_pvals = TRUE)
-  expect_false(is.na(res_drop$p_vals$score_pval_null_info))
-
-  # run aggregated model
-  # run aggregated model, cat categories as constaint, test 100th
-  res_agg <- fastEmuTest(model = "agg",
-                          constraint_cats = cats,
-                          Y = Y,
-                          X = X,
-                          test_kj = data.frame(k = 2, j = 100),
-                          tau = 2,
-                          B_null_tol = 0.005,
-                          tolerance = 0.005,
-                          constraint_tol = 0.001,
-                          return_wald_p = TRUE,
-                          use_both_cov = FALSE,
-                          use_fullmodel_info = TRUE,
-                          return_both_score_pvals = TRUE)
-  expect_false(is.na(res_agg$p_vals$score_pval_null_info))
-
-  # the correct number of categories are included for each model
-  expect_true(nrow(res_full$coef) == 2*ncol(Y) &
-                nrow(res_drop$coef) == 2*(1 + length(cats)) &
-                nrow(res_agg$coef) == 2*(2 + length(cats)))
-
-  # test category that is included in constraint
-  res_drop2 <- fastEmuTest(model = "drop",
-                          constraint_cats = cats,
-                          Y = Y,
-                          X = X,
-                          test_kj = data.frame(k = 2, j = cats[10]),
-                          tau = 2,
-                          B_null_tol = 0.005,
-                          tolerance = 0.005,
-                          constraint_tol = 0.001,
-                          return_wald_p = TRUE,
-                          use_both_cov = FALSE,
-                          use_fullmodel_info = TRUE,
-                          return_both_score_pvals = TRUE)
-  expect_false(is.na(res_drop$p_vals$score_pval_null_info))
+  expect_true(all.equal(radEmu_res$coef, fastEmu_res$coef[, -10]))
 })
 
-test_that("new updates to fastEmuTest work the same as old version", {
+test_that("fastEmu runs with and without estimation, and results don't change", {
 
-  library(fastEmu)
-  library(radEmu)
+  colnames(Y) <- paste0("taxon", 1:10)
+  expect_silent({res_est <- fastEmuTest(constraint_cats = 1:5, Y = Y, X = X,
+                            test_kj = data.frame(k = 2, j = 6), estimate_full_model = TRUE)})
+  expect_silent({res_no_est <- fastEmuTest(constraint_cats = 1:5, Y = Y, X = X,
+                            test_kj = data.frame(k = 2, j = 6), estimate_full_model = FALSE)})
+  expect_true(res_est$coef$pval[6] == res_no_est$coef$pval)
 
-  # simulate data
-  n <- 100
-  J <- 200
-  b0 <- rnorm(J)
-  b1 <- rnorm(J)
-  X <- cbind(1, rep(c(0, 1), each = n/2),
-             rnorm(n))
-  Y <- radEmu:::simulate_data(n = n,
-                              J = J,
-                              b0 = b0,
-                              b1 = b1,
-                              distn = "Poisson",
-                              zinb_size = 5,
-                              zinb_zero_prop = 0.6,
-                              mean_count_before_ZI = 50)
-  colnames(Y) <- paste0("category", 1:ncol(Y))
+  # also check we're returning what we want
 
-  # test 100th category
-  # randomly select 25 categories to use as constraint
-  cats <- sample((1:ncol(Y))[-100], 25)
+  # all constraint categories are in "included_categories"
+  expect_true(sum(paste0("taxon", 1:5) %in% unlist(res_est$included_categories)) == 5)
+  # categories in coef are in the same order as they are in Y
+  expect_true(all.equal(colnames(Y), res_est$coef$category))
 
-  # run dropped model
-  # run dropped model, cat categories as constraint, test 100th
-  res_drop <- fastEmuTest(constraint_cats = cats,
-                          Y = Y,
-                          X = X,
-                          test_kj = data.frame(k = 2, j = 100),
-                          tau = 2,
-                          B_null_tol = 0.005,
-                          tolerance = 0.005,
-                          constraint_tol = 0.001,
-                          return_wald_p = TRUE,
-                          use_both_cov = FALSE,
-                          use_fullmodel_info = TRUE,
-                          return_both_score_pvals = TRUE)
-  old_res_drop <- old_fastEmuTest(model = "drop",
-                              constraint_cats = cats,
-                              Y = Y,
-                              X = X,
-                              test_kj = data.frame(k = 2, j = 100),
-                              tau = 2,
-                              B_null_tol = 0.005,
-                              tolerance = 0.005,
-                              constraint_tol = 0.001,
-                              return_wald_p = TRUE,
-                              use_both_cov = FALSE,
-                              use_fullmodel_info = TRUE,
-                              return_both_score_pvals = TRUE)
-  expect_true(all.equal(res_drop$coef[26, ], old_res_drop$coef[26, ]))
+})
+
+test_that("fastEmu can work with additional arguments", {
+
+  expect_silent({res <- fastEmuTest(constraint_cats = 1:5, Y = Y, X = X, test_kj = data.frame(k = 2, j = 6),
+                            penalize = FALSE, return_nullB = TRUE)})
+
+  # check that penalty is FALSE
+  expect_false(res$penalized)
+
+  # check that nullB is returned
+  expect_true("null_B" %in% names(res))
+
+})
+
+test_that("fastEmu still works with deprecated aggregated model", {
+
+  expect_silent({res_agg <- fastEmuTest(constraint_cats = 1:5, Y = Y, X = X, test_kj = data.frame(k = 2, j = 6),
+                            model = "agg")})
+
+  res_drop <- fastEmuTest(constraint_cats = 1:5, Y = Y, X = X, test_kj = data.frame(k = 2, j = 6))
+  expect_true(all.equal(res_agg$coef$pval[6], res_drop$coef$pval[6], tol = 0.001))
 
 })

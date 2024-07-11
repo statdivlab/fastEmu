@@ -2,43 +2,25 @@
 % Please edit documentation in R/fastEmuTest.R
 \name{fastEmuTest}
 \alias{fastEmuTest}
-\title{Fit radEmu model after collapsing data into smaller joint model, runs score tests}
+\title{Run robust score tests using a reduced version of the radEmu model}
 \usage{
 fastEmuTest(
   constraint_cats,
+  estimate_full_model = TRUE,
   Y,
   X = NULL,
   formula = NULL,
   data = NULL,
+  test_kj = NULL,
   cluster = NULL,
   penalize = TRUE,
   B = NULL,
   fitted_model = NULL,
   refit = TRUE,
-  test_kj,
-  alpha = 0.05,
   return_wald_p = FALSE,
   compute_cis = TRUE,
-  run_score_tests = TRUE,
-  use_fullmodel_info = FALSE,
-  use_fullmodel_cov = FALSE,
-  use_both_cov = FALSE,
   verbose = FALSE,
-  tolerance = 1e-04,
-  B_null_tol = 0.001,
-  rho_init = 1,
-  inner_tol = 1,
-  ntries = 4,
-  tau = 2,
-  kappa = 0.8,
-  constraint_tol = 1e-05,
-  c1 = 1e-04,
-  maxit = 1000,
-  inner_maxit = 25,
-  max_step = 1,
-  trackB = FALSE,
-  return_nullB = FALSE,
-  return_both_score_pvals = FALSE,
+  ...,
   model = NULL
 )
 }
@@ -46,13 +28,22 @@ fastEmuTest(
 \item{constraint_cats}{a vector of category indices for categories that should be involved in the constraint
 and retained in any smaller joint model}
 
+\item{estimate_full_model}{If TRUE, this function will estimate parameters from full model (recommended)
+and run score tests with the reduced model. If FALSE, score tests will be run with the reduced model but
+parameter estimates will not be produced. Set to FALSE if you are running score tests in parallel
+and don't want to estimate parameters for the full model every time. Default is TRUE.}
+
 \item{Y}{an n x J matrix or dataframe of nonnegative observations, or a phyloseq object containing an otu table and sample data.}
 
-\item{X}{an n x p matrix or dataframe of covariates (optional)}
+\item{X}{an n x p matrix or dataframe of covariates (optional, either include \code{X} or \code{formula} and \code{data})}
 
 \item{formula}{a one-sided formula specifying the form of the mean model to be fit}
 
 \item{data}{an n x p data frame containing variables given in \code{formula}}
+
+\item{test_kj}{a data frame whose rows give coordinates (in category j and
+covariate k) of elements of B to construct hypothesis tests for. If \code{test_kj}
+is not provided, all elements of B save the intercept row will be tested.}
 
 \item{cluster}{a numeric vector giving cluster membership for each row of Y to
 be used in computing GEE test statistics. Default is NULL, in which case rows of
@@ -63,7 +54,7 @@ Y are treated as independent.}
 \item{B}{starting value of coefficient matrix (p x J). If not provided,
 B will be initiated as a zero matrix.}
 
-\item{fitted_model}{a fitted model produced by a separate call to emuFit; to
+\item{fitted_model}{a fitted model produced by a call to radEmu::emuFit; to
 be provided if score tests are to be run without refitting the full unrestricted model.
 Default is NULL.}
 
@@ -71,81 +62,15 @@ Default is NULL.}
 should fitting step be skipped (FALSE), e.g., if score tests are to be run on an already
 fitted model. Default is TRUE.}
 
-\item{test_kj}{a data frame whose rows give coordinates (in category j and
-covariate k) of elements of B to construct hypothesis tests for. If \code{test_kj}
-is not provided, all elements of B save the intercept row will be tested.}
+\item{return_wald_p}{logical: return p-values from Wald tests? Default is FALSE. These can only be
+returned if \code{estimate_full_model} is TRUE.}
 
-\item{alpha}{nominal type 1 error level to be used to construct confidence intervals. Default is 0.05
-(corresponding to 95\% confidence intervals)}
-
-\item{return_wald_p}{logical: return p-values from Wald tests? Default is FALSE.}
-
-\item{compute_cis}{logical: compute and return Wald CIs? Default is TRUE.}
-
-\item{run_score_tests}{logical: perform robust score testing? Default is TRUE.}
-
-\item{use_fullmodel_info}{logical: TODO? Default is FALSE.}
-
-\item{use_fullmodel_cov}{logical: use information matrix and empirical score covariance
-computed for full model fit? Defaults to FALSE, in which case these quantities are
-recomputed for each null model fit for score testing.}
-
-\item{use_both_cov}{logical: should score tests be run using information and
-empirical score covariance evaluated both under the null and full models?
-Used in simulations}
+\item{compute_cis}{logical: compute and return Wald CIs? Default is TRUE. These can only be
+returned if \code{estimate_full_model} is TRUE.}
 
 \item{verbose}{provide updates as model is being fitted? Defaults to TRUE.}
 
-\item{tolerance}{tolerance for stopping criterion in full model fitting; once
-no element of B is updated by more than this value in a single step, we exit
-optimization. Defaults to 1e-3.}
-
-\item{B_null_tol}{numeric: convergence tolerance for null model fits for score testing (if max of absolute difference in
-B across outer iterations is below this threshold, we declare convergence).
-Default is 0.01.}
-
-\item{rho_init}{numeric: value at which to initiate rho parameter in augmented Lagrangian
-algorithm. Default is 1.}
-
-\item{inner_tol}{numeric: convergence tolerance for augmented Lagrangian subproblems
-within null model fitting. Default is 1.}
-
-\item{ntries}{numeric: how many times should optimization be tried in null
-models where at least one optimization attempt fails? Default is 4.}
-
-\item{tau}{numeric: value to scale rho by in each iteration of augmented Lagrangian
-algorithm that does not move estimate toward zero sufficiently. Default is 2.}
-
-\item{kappa}{numeric: value between 0 and 1 that determines the cutoff on the ratio
-of current distance from feasibility over distance in last iteration triggering
-scaling of rho. If this ratio is above kappa, rho is scaled by tau to encourage
-estimate to move toward feasibility.}
-
-\item{constraint_tol}{numeric: constraint tolerance for fits under null hypotheses
-(tested element of B must be equal to constraint function to within this tolerance for
-a fit to be accepted as a solution to constrained optimization problem). Default is 1e-5.}
-
-\item{c1}{numeric: parameter for Armijo line search. Default is 1e-4.}
-
-\item{maxit}{maximum number of outer iterations of augmented lagrangian algorithm to perform before
-exiting optimization. Default is 1000.}
-
-\item{inner_maxit}{maximum number of coordinate descent passes through columns of B to make within each
-outer iteration of augmented lagrangian algorithm before exiting inner loop}
-
-\item{max_step}{maximum stepsize; update directions computed during optimization
-will be rescaled if a step in any parameter exceeds this value. Defaults to 0.5.}
-
-\item{trackB}{logical: should values of B be recorded across optimization
-iterations and be returned? Primarily used for debugging. Default is FALSE.}
-
-\item{return_nullB}{logical: should values of B under null hypothesis be returned.
-Primarily used for debugging. Default is FALSE.}
-
-\item{return_both_score_pvals}{logical: should score p-values be returned using both
-information matrix computed from full model fit and from null model fits? Default is
-FALSE. This parameter is used for simulations - in any applied analysis, type of
-p-value to be used should be chosen before conducting tests.}
+\item{...}{Additional arguments to radEmu:::emuFit. See possible arguments with \code{?radEmu::emuFit}.}
 
 \item{model}{deprecated argument, default is "drop" to run the reduced model that drops
 all categories not in the constraint or being tested for each score test, "full" to run tests
@@ -153,16 +78,19 @@ with the full joint model (equivalent to radEmu), or "agg" to run a different ve
 model in which all categories not in the constraint or being tested are aggregated together}
 }
 \value{
-A list containing elements 'coef', 'B', 'penalized', 'Y_augmented',
-'I', and 'Dy'.  Parameter estimates by
-covariate and outcome category (e.g., taxon for microbiome data), as well as
-optionally confidence intervals and p-values, are contained in 'coef'. 'B'
-contains parameter estimates in matrix format (rows indexing covariates and
-columns indexing outcome category / taxon). 'penalized' is equal to TRUE
-if Firth penalty is used in estimation (default) and FALSE otherwise. 'I' and
-'Dy' contain an information matrix and empirical score covariance matrix
-computed under the full model.
+A list containing elements 'coef', 'included_categories', and 'score_test_hyperparams'.
+'coef' is a matrix with score test statistics and p-values for all parameters tested. 'Included_categories'
+is a list of the categories used in the reduced model for each score test that is fit.
+'score_test_hyperparameters' contains parameters and hyperparameters related to estimation under the
+null, including whether or not the algorithm converged, which can be helpful for debugging.
+The elements in 'Included_categories' and 'score_test_hyperparams' correspond to the tests described
+in \code{test_kj} and are in the same order.
+If \code{esttimate_full_model} is TRUE, then 'coef' will also include the estimates and optionally
+confidence intervals and Wald test p-values for all parameters, estimated from the full model.
+Additionally, if \code{estimate_full_model} is TRUE, the return list will also include 'B', 'penalized', 'Y_augmented',
+'z_hat', 'I', and 'Dy'. See the documentation in \code{?radEmu::emuFit} for a description of these
+elements.
 }
 \description{
-Fit radEmu model after collapsing data into smaller joint model, runs score tests
+Run robust score tests using a reduced version of the radEmu model
 }
