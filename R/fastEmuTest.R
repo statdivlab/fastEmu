@@ -163,6 +163,27 @@ fastEmuTest <- function(constraint_cats,
 
   if (run_score) {
     # prepare to run score tests
+
+    # get X matrix
+    if (is.null(X)) {
+      if (is.null(formula) | is.null(data)) {
+        stop("If design matrix X not provided, both formula and data containing
+covariates in formula must be provided.")
+      }
+      X <- model.matrix(formula, data)
+    }
+    if ("data.frame" %in% class(X)) {
+      X <- as.matrix(X)
+      if (!is.numeric(X)) {
+        stop("X is a data frame that cannot be coerced to a numeric matrix. Please fix and try again.")
+      }
+    }
+    p <- ncol(X)
+
+    if (is.null(test_kj)) {
+      test_kj <- data.frame(expand.grid(k = 2:p, j = 1:J))
+    }
+
     n_test <- nrow(test_kj)
     score_res <- NULL
     included_categories <- vector(mode = "list", length = n_test)
