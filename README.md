@@ -39,7 +39,7 @@ library(radEmu)
 The vignettes demonstrate example usage of the main functions. Please [file an issue](https://github.com/statdivlab/fastEmu/issues) if you have a request for a tutorial that is not currently included. 
 
 The following code will run `radEmu` to estimate fold differences in abundance for
-all genes in $Y$ in comparison to the typical fold difference in a subset of genes that encode ribosomal proteins, and will run `fastEmu` to quickly run a robust score test for the hypothesis that the $5$th category has a fold difference in abundance that is different than the typical fold difference in the set of ribosomal genes. 
+all genes in $Y$ in comparison to the typical fold difference in a subset of genes that encode ribosomal proteins, and will run `fastEmu` to quickly run a robust score test for the hypothesis that the $5\text{th}$ category has a fold difference in abundance that is different than the typical fold difference in the set of ribosomal genes. 
 
 ``` r
 emu_test <- fastEmuTest(constraint_cats = ribosomal_subset, 
