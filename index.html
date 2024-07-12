@@ -55,7 +55,68 @@
 
       </header><div class="row">
   <div class="contents col-md-9">
-<p>Currently under construction!</p>
+<div class="section level1">
+<div class="page-header"><h1 id="fastemu">fastEmu<a class="anchor" aria-label="anchor" href="#fastemu"></a>
+</h1></div>
+<!-- badges: start -->
+
+<p><code>fastEmu</code> is an <code>R</code> package for estimating changes in the abundance of microbial categories (taxa, genes, etc.) associated with covariates using high throughput sequencing data. <code>fastEmu</code> is a wrapper for the package <a href="https://github.com/statdivlab/radEmu" class="external-link"><code>radEmu</code></a> that implements a fast version of the hypothesis testing procedure implemented in <code>radEmu</code>.</p>
+<p>Check out <a href="https://github.com/statdivlab/radEmu" class="external-link"><code>radEmu</code></a> for a full list of reasons to use this method for your differential abundance analysis. Some highlights include:</p>
+<ul>
+<li>
+<code>radEmu</code> uses high throughput sequencing data to estimate changes in the “absolute abundance” of categories</li>
+<li>
+<code>radEmu</code> doesn’t require data transformations, a reference taxon, or pseudocounts</li>
+<li>
+<code>radEmu</code> is robust to differential sampling depths and differential detection of categories (taxa, genes, etc.)</li>
+<li>
+<code>radEmu</code> has great error control, including in small samples and data generated from different distributions</li>
+</ul>
+<p>However, hypothesis testing in <code>radEmu</code> can be slow, especially when there is a large number of categories. This is why we created <code>fastEmu</code>! <code>fastEmu</code> uses a simplified model to test the same parameters* tested in <code>radEmu</code>, but much faster.</p>
+<div class="section level3">
+<h3 id="what-parameters-are-we-estimating-exactly">What parameters are we estimating exactly?<a class="anchor" aria-label="anchor" href="#what-parameters-are-we-estimating-exactly"></a>
+</h3>
+<p>*We don’t estimate exactly the same parameters as in <code>radEmu</code>. In <code>radEmu</code>, we estimate the log fold difference in abundance associated with the covariate for each category <em>relative</em> to the typical log fold difference in abundance associated with the covariate across all categories. This lets us pick out the categories that are the most differentially abundant compared to the overall set of categories. In <code>fastEmu</code>, we cannot compare to the typical log fold difference all categories, because we need to reduce the size of our model in order to run it quickly. Instead, we compare to the typical log fold difference in a subset of categories.</p>
+<p>We suggest choosing a meaningful subset if there is one in your analysis. For example, when we run differential abundance analyses for Kegg Orthologies (KOs) that represent genes, we compare to the typical log fold difference in KOs that encode ribosomal proteins. We do this because we expect these KOs to be changing very little across any covariate. If you have something similar in your analysis you can choose that, otherwise you can choose an arbitrary subset and approximate the parameters from <code>radEmu</code> pretty well!</p>
+</div>
+<div class="section level2">
+<h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
+</h2>
+<p>To download <code>fastEmu</code>, use the code below.</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># install.packages("devtools")</span></span>
+<span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"statdivlab/fastEmu"</span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/statdivlab/radEmu" class="external-link">radEmu</a></span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="use">Use<a class="anchor" aria-label="anchor" href="#use"></a>
+</h2>
+<p>The vignettes demonstrate example usage of the main functions. Please <a href="https://github.com/statdivlab/fastEmu/issues" class="external-link">file an issue</a> if you have a request for a tutorial that is not currently included.</p>
+<p>The following code will run <code>radEmu</code> to estimate fold differences in abundance for all genes in <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>Y</mi><annotation encoding="application/x-tex">Y</annotation></semantics></math> in comparison to the typical fold difference in a subset of genes that encode ribosomal proteins, and will run <code>fastEmu</code> to quickly run a robust score test for the hypothesis that the <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mn>5</mn><annotation encoding="application/x-tex">5</annotation></semantics></math>th category has a fold difference in abundance that is different than the typical fold difference in the set of ribosomal genes.</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">emu_test</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/fastEmuTest.html">fastEmuTest</a></span><span class="op">(</span>constraint_cats <span class="op">=</span> <span class="va">ribosomal_subset</span>, </span>
+<span>                        formula <span class="op">=</span> <span class="op">~</span> <span class="va">treatment</span>,</span>
+<span>                        data <span class="op">=</span> <span class="va">sample_data</span>, </span>
+<span>                        Y <span class="op">=</span> <span class="va">count_data</span>,</span>
+<span>                        test_kj <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>k <span class="op">=</span> <span class="fl">2</span>, j <span class="op">=</span> <span class="fl">5</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="documentation">Documentation<a class="anchor" aria-label="anchor" href="#documentation"></a>
+</h2>
+<p>We additionally have a <code>pkgdown</code> <a href="https://statdivlab.github.io/fastEmu/" class="external-link">website</a> that contains pre-built versions of our function <a href="https://statdivlab.github.io/fastEmu/reference/index.html" class="external-link">documentation</a> and our vignettes (coming soon).</p>
+</div>
+<div class="section level2">
+<h2 id="citation">Citation<a class="anchor" aria-label="anchor" href="#citation"></a>
+</h2>
+<p>If you use <code>fastEmu</code> for your analysis, check back in soon for a preprint!</p>
+</div>
+<div class="section level2">
+<h2 id="bug-reports--change-requests">Bug Reports / Change Requests<a class="anchor" aria-label="anchor" href="#bug-reports--change-requests"></a>
+</h2>
+<p>If you encounter a bug or would like make a change request, please file it as an issue <a href="https://github.com/statdivlab/fastEmu/issues" class="external-link">here</a>.</p>
+<p>If you’re a developer, we would love to review your pull requests.</p>
+</div>
+</div>
   </div>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
@@ -83,7 +144,13 @@
 </ul>
 </div>
 
-
+<div class="dev-status">
+<h2 data-toc-skip>Dev status</h2>
+<ul class="list-unstyled">
+<li><a href="https://github.com/statdivlab/fastEmu/actions" class="external-link"><img src="https://github.com/statdivlab/fastEmu/workflows/R-CMD-check/badge.svg" alt="R-CMD-check"></a></li>
+<li><a href="https://app.codecov.io/github/statdivlab/fastEmu" class="external-link"><img src="https://codecov.io/github/statdivlab/fastEmu/coverage.svg?branch=main" alt="codecov"></a></li>
+</ul>
+</div>
 
   </div>
 </div>
