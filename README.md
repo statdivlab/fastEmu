@@ -15,11 +15,11 @@ Check out [`radEmu`](https://github.com/statdivlab/radEmu) for a full list of re
 - `radEmu` is robust to differential sampling depths and differential detection of categories (taxa, genes, etc.)
 - `radEmu` has great error control, including in small samples and data generated from different distributions
 
-However, hypothesis testing in `radEmu` can be slow, especially when there is a large number of categories. This is why we created `fastEmu`! `fastEmu` uses a simplified model to test the same parameters\* tested in `radEmu`, but much faster. 
+However, hypothesis testing in `radEmu` can be slow, especially when there is a large number of categories. This is why we created `fastEmu`! `fastEmu` uses a simplified model to test the same parameters$^*$ tested in `radEmu`, but much faster. 
 
 ### What parameters are we estimating exactly?
 
-\*We don't estimate exactly the same parameters as in `radEmu`. In `radEmu`, we estimate 
+$^*$We don't estimate exactly the same parameters as in `radEmu`. In `radEmu`, we estimate 
 the log fold difference in abundance associated with the covariate for each category *relative* to the typical log fold difference in abundance associated with the covariate across all categories. This lets us pick out the categories that are the most differentially abundant compared to the overall set of categories. In `fastEmu`, we cannot compare to the typical log fold difference all categories, because we need to reduce the size of our model in order to run it quickly. Instead, we compare to the typical log fold difference in a subset of categories. 
 
 We suggest choosing a meaningful subset if there is one in your analysis. For example, when we run differential abundance analyses for Kegg Orthologies (KOs) that represent genes, we compare to the typical log fold difference in KOs that encode ribosomal proteins. We do this because we expect these KOs to be changing very little across any covariate. If you have something similar in your analysis you can choose that, otherwise you can choose an arbitrary subset and approximate the parameters from `radEmu` pretty well! 
