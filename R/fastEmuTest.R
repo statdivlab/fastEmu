@@ -92,6 +92,30 @@ fastEmuTest <- function(constraint_cats,
             By default, fastEmu uses the pseudo-median over the categories specified in 'constraint_cats' as a constraint.")
   }
 
+  # check if Y is a phyloseq object
+  if ("phyloseq" %in% class(Y)) {
+    if (requireNamespace("phyloseq", quietly = TRUE)) {
+      if (is.null(formula)) {
+        stop("If Y is a `phyloseq` object, make sure to include the formula argument.")
+      } else {
+        data <- data.frame(phyloseq::sample_data(Y))
+        X <- model.matrix(formula, data)
+        taxa_are_rows <- Y@otu_table@taxa_are_rows
+        Y <- as.matrix(phyloseq::otu_table(Y))
+        if (taxa_are_rows) {
+          Y <- t(Y)
+        }
+      }
+    } else {
+      stop("You are trying to use a `phyloseq` data object or `phyloseq` helper function without having the `phyloseq` package installed. Please either install the package or use a standard data frame.")
+    }
+  } else if ("data.frame" %in% class(Y)) {
+    Y <- as.matrix(Y)
+    if (!is.numeric(Y)) {
+      stop("Y is a data frame that cannot be coerced to a numeric matrix. Please fix and try again.")
+    }
+  }
+
   if (sum(rowSums(Y) == 0) > 0) {
     stop("There is at least one sample with no counts in any category. Please remove samples that have no counts in any category.")
   }
