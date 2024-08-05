@@ -335,6 +335,22 @@ covariates in formula must be provided.")
         }
       }
 
+      if (estimate_full_model & penalize) {
+        upd_fitted_model <- emu_est
+        upd_fitted_model$B <- upd_B
+        if (model != "full") {
+          upd_fitted_model$Y_augmented <- upd_fitted_model$Y_augmented[, ind_keep]
+        }
+      } else if (!is.null(fitted_model) & penalize) {
+        upd_fitted_model <- fitted_model
+        upd_fitted_model$B <- upd_B
+        if (model != "full") {
+          upd_fitted_model$Y_augmented <- upd_fitted_model$Y_augmented[, ind_keep]
+        }
+      } else {
+        upd_fitted_model <- NULL
+      }
+
       # remove arguments we don't want for score tests
       inf_args_rm <- which(names(extra_args) %in%
                              c("constraint_fn", "constraint_grad_fn", "constraint_param"))
@@ -345,7 +361,7 @@ covariates in formula must be provided.")
                        cluster = cluster,
                        penalize = penalize,
                        B = upd_B,
-                       fitted_model = NULL,
+                       fitted_model = upd_fitted_model,
                        refit = refit,
                        test_kj = data.frame(k = test_kj$k[i_test],
                                             j = j_ind),
