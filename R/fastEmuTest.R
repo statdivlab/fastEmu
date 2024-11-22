@@ -213,6 +213,7 @@ covariates in formula must be provided.")
     included_categories <- vector(mode = "list", length = n_test)
     score_test_hyperparams <- vector(mode = "list", length = n_test)
     null_B <- vector(mode = "list", length = n_test)
+    score_pieces <- vector(mode = "list", length = n_test)
 
     if (is.null(model)) {
       model = "drop"
@@ -392,6 +393,9 @@ covariates in formula must be provided.")
       if ("null_B" %in% names(emuObj)) {
         null_B[[i_test]] <- emuObj$null_B[[1]]
       }
+      if ("score_components" %in% names(emuObj)) {
+        score_pieces[[i_test]] <- emuObj$score_components[[1]]
+      }
     }
   }
 
@@ -417,9 +421,12 @@ covariates in formula must be provided.")
   }
   if (run_score) {
     res$included_categories <- included_categories
-    res$score_rest_hyperparams <- score_test_hyperparams
+    res$score_test_hyperparams <- score_test_hyperparams
     if (!is.null(null_B[[1]])) {
       res$null_B <- null_B
+    }
+    if (!is.null(score_pieces[[1]])) {
+      res$score_components <- score_pieces
     }
   }
 
