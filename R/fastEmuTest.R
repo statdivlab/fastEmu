@@ -73,6 +73,10 @@ fastEmuTest <- function(constraint_cats,
                         model = NULL) {
 
 
+  lifecycle::deprecate_warn(when = "1.0.0",
+                            what = "fastEmuTest()",
+                            with = "fastEmuFit()")
+
   run_score <- TRUE
   extra_args <- list(...)
   if ("run_score_tests" %in% names(extra_args)) {
