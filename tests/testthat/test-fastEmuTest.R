@@ -49,15 +49,17 @@ test_that("fastEmu can work with additional arguments", {
 
 })
 
-test_that("fastEmu still works with deprecated aggregated model", {
+# removing this because no longer considering aggregated model
 
-  res_agg <- suppressWarnings(fastEmuTest(constraint_cats = 1:5, Y = Y, X = X, test_kj = data.frame(k = 2, j = 6),
-                            model = "agg", match_row_names = FALSE))
-
-  res_drop <- suppressWarnings(fastEmuTest(constraint_cats = 1:5, Y = Y, X = X, test_kj = data.frame(k = 2, j = 6)))
-  expect_true(all.equal(res_agg$coef$pval[6], res_drop$coef$pval[6], tol = 0.05, match_row_names = FALSE))
-
-})
+# test_that("fastEmu still works with deprecated aggregated model", {
+#
+#   res_agg <- suppressWarnings(fastEmuTest(constraint_cats = 1:5, Y = Y, X = X, test_kj = data.frame(k = 2, j = 6),
+#                             model = "agg", match_row_names = FALSE))
+#
+#   res_drop <- suppressWarnings(fastEmuTest(constraint_cats = 1:5, Y = Y, X = X, test_kj = data.frame(k = 2, j = 6)))
+#   expect_true(all.equal(res_agg$coef$pval[6], res_drop$coef$pval[6], tol = 0.05, match_row_names = FALSE))
+#
+# })
 
 test_that("fastEmu controls Type I error rate when it should", {
 
