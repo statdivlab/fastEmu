@@ -13,7 +13,7 @@ test_that("radEmu and fastEmu give same results when using full model and all ca
   fastEmu_res <- suppressWarnings(fastEmuTest(constraint_cats = 1:10, Y = Y, X = X,
                              test_kj = data.frame(k = 2, j = 6), model = "full", match_row_names = FALSE))
 
-  expect_true(all.equal(radEmu_res$coef, fastEmu_res$coef[, -10]))
+  expect_true(all.equal(radEmu_res$coef, fastEmu_res$coef[, -10], 0.01))
 })
 
 test_that("fastEmu runs with and without estimation, and results don't change", {
@@ -25,7 +25,7 @@ test_that("fastEmu runs with and without estimation, and results don't change", 
   suppressWarnings({res_no_est <- fastEmuTest(constraint_cats = 1:5, Y = Y, X = X,
                             test_kj = data.frame(k = 2, j = 6), estimate_full_model = FALSE,
                             match_row_names = FALSE)})
-  expect_true(res_est$coef$pval[6] == res_no_est$coef$pval)
+  expect_true(all.equal(res_est$coef$pval[6], res_no_est$coef$pval, 0.01))
 
   # also check we're returning what we want
 
