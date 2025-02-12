@@ -47,6 +47,7 @@
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">fastEmuFit</span><span class="op">(</span></span>
 <span>  reference_set <span class="op">=</span> <span class="st">"data_driven"</span>,</span>
 <span>  reference_set_size <span class="op">=</span> <span class="fl">50</span>,</span>
+<span>  reference_set_covariate <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">Y</span>,</span>
 <span>  X <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  formula <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -83,6 +84,17 @@ splitting or Poisson thinning respectively.</p></dd>
 <dd><p>The size of the reference set if it is data-driven, default
 is set to <code>50</code>. We recommend a reference set of size 30-100 for the best balance
 of computational efficiency and estimation precision.</p></dd>
+
+
+<dt id="arg-reference-set-covariate">reference_set_covariate<a class="anchor" aria-label="anchor" href="#arg-reference-set-covariate"></a></dt>
+<dd><p>If the reference set is data-driven, which covariates should
+it be chosen relative to. By default, this will be all covariates in the model (ignoring
+the intercept). However, if a model includes a main covariate that will be tested and several
+precision variables, we recommend choosing the reference set with respect to the main
+covariate of interest. This argument should be a vector of numbers that correspond to
+column indices in the <code>X</code> design matrix. If you don't know which columns correspond to
+each covariate in your design matrix, run the function <code><a href="https://statdivlab.github.io/radEmu/reference/make_design_matrix.html" class="external-link">radEmu::make_design_matrix()</a></code> to
+see the design matrix for your model.</p></dd>
 
 
 <dt id="arg-y">Y<a class="anchor" aria-label="anchor" href="#arg-y"></a></dt>
@@ -156,18 +168,19 @@ returned if <code>estimate_full_model</code> is TRUE.</p></dd>
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    <p>Sarah UPDATE!!! A list containing elements 'coef', 'included_categories', and 'score_test_hyperparams'.
-'coef' is a matrix with score test statistics and p-values for all parameters tested. 'Included_categories'
-is a list of the categories used in the reduced model for each score test that is fit.
-'score_test_hyperparameters' contains parameters and hyperparameters related to estimation under the
-null, including whether or not the algorithm converged, which can be helpful for debugging.
-The elements in 'Included_categories' and 'score_test_hyperparams' correspond to the tests described
-in <code>test_kj</code> and are in the same order.
-If <code>esttimate_full_model</code> is TRUE, then 'coef' will also include the estimates and optionally
-confidence intervals and Wald test p-values for all parameters, estimated from the full model.
-Additionally, if <code>estimate_full_model</code> is TRUE, the return list will also include 'B', 'penalized', 'Y_augmented',
-'z_hat', 'I', and 'Dy'. See the documentation in <code><a href="https://statdivlab.github.io/radEmu/reference/emuFit.html" class="external-link">?radEmu::emuFit</a></code> for a description of these
-elements.</p>
+    <p>A list that includes all elements of an <code>emuFit</code> object from <code><a href="https://statdivlab.github.io/radEmu/reference/emuFit.html" class="external-link">radEmu::emuFit()</a></code>, as
+well as additional elements. See the documentation in <code><a href="https://statdivlab.github.io/radEmu/reference/emuFit.html" class="external-link">?radEmu::emuFit</a></code> for a full description of the
+elements in an <code>emuFit</code> object.The <code>emuFit</code> object includes the matrix <code>coef</code>, which provides
+estimates for all parameters and score statistics and p-values for all parameters that were tested.
+The returned object also includes <code>reference_set</code> and <code>reference_set_names</code>, which give the
+indices of the reference set in terms of columns of the <code>Y</code> matrix and category names respectively,
+of the categories (taxa) that were used as a reference set of "typical taxa" for the identifiability
+constraint. Other elements of the list correspond to score tests. <code>included_categories</code> gives the
+set of categories used for the reduced model for each score test, <code>score_test_hyperparams</code> provides
+the hyperparameters related to estimation under the null hypothesis for each score test. If <code>return_null_B</code>
+or <code>return_score_components</code> were set to <code>TRUE</code>, then <code>null_B</code> or <code>score_components</code>
+will also be returned, which respectively give the estimated B values under the null hypothesis and the
+components of the robust score test that are run, for each score test.</p>
     </div>
 
   </div>
