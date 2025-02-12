@@ -7,6 +7,7 @@
 fastEmuFit(
   reference_set = "data_driven",
   reference_set_size = 50,
+  reference_set_covariate = NULL,
   Y,
   X = NULL,
   formula = NULL,
@@ -36,6 +37,15 @@ splitting or Poisson thinning respectively.}
 \item{reference_set_size}{The size of the reference set if it is data-driven, default
 is set to \code{50}. We recommend a reference set of size 30-100 for the best balance
 of computational efficiency and estimation precision.}
+
+\item{reference_set_covariate}{If the reference set is data-driven, which covariates should
+it be chosen relative to. By default, this will be all covariates in the model (ignoring
+the intercept). However, if a model includes a main covariate that will be tested and several
+precision variables, we recommend choosing the reference set with respect to the main
+covariate of interest. This argument should be a vector of numbers that correspond to
+column indices in the \code{X} design matrix. If you don't know which columns correspond to
+each covariate in your design matrix, run the function \code{radEmu::make_design_matrix()} to
+see the design matrix for your model.}
 
 \item{Y}{an n x J matrix or dataframe of nonnegative observations, or a \code{phyloseq}
 or \code{TreeSummarizedExperiment} object containing an otu table and sample data.}
@@ -79,18 +89,19 @@ returned if \code{estimate_full_model} is TRUE.}
 \item{...}{Additional arguments to radEmu:::emuFit. See possible arguments with \code{?radEmu::emuFit}.}
 }
 \value{
-Sarah UPDATE!!! A list containing elements 'coef', 'included_categories', and 'score_test_hyperparams'.
-'coef' is a matrix with score test statistics and p-values for all parameters tested. 'Included_categories'
-is a list of the categories used in the reduced model for each score test that is fit.
-'score_test_hyperparameters' contains parameters and hyperparameters related to estimation under the
-null, including whether or not the algorithm converged, which can be helpful for debugging.
-The elements in 'Included_categories' and 'score_test_hyperparams' correspond to the tests described
-in \code{test_kj} and are in the same order.
-If \code{esttimate_full_model} is TRUE, then 'coef' will also include the estimates and optionally
-confidence intervals and Wald test p-values for all parameters, estimated from the full model.
-Additionally, if \code{estimate_full_model} is TRUE, the return list will also include 'B', 'penalized', 'Y_augmented',
-'z_hat', 'I', and 'Dy'. See the documentation in \code{?radEmu::emuFit} for a description of these
-elements.
+A list that includes all elements of an \code{emuFit} object from \code{radEmu::emuFit()}, as
+well as additional elements. See the documentation in \code{?radEmu::emuFit} for a full description of the
+elements in an \code{emuFit} object.The \code{emuFit} object includes the matrix \code{coef}, which provides
+estimates for all parameters and score statistics and p-values for all parameters that were tested.
+The returned object also includes \code{reference_set} and \code{reference_set_names}, which give the
+indices of the reference set in terms of columns of the \code{Y} matrix and category names respectively,
+of the categories (taxa) that were used as a reference set of "typical taxa" for the identifiability
+constraint. Other elements of the list correspond to score tests. \code{included_categories} gives the
+set of categories used for the reduced model for each score test, \code{score_test_hyperparams} provides
+the hyperparameters related to estimation under the null hypothesis for each score test. If \code{return_null_B}
+or \code{return_score_components} were set to \code{TRUE}, then \code{null_B} or \code{score_components}
+will also be returned, which respectively give the estimated B values under the null hypothesis and the
+components of the robust score test that are run, for each score test.
 }
 \description{
 A fast approximation to \code{emuFit} from \code{radEmu}.

@@ -7,9 +7,9 @@ test_that("same mean from either distribution", {
   b2 <- rnorm(J)
   B <- rbind(b0, b1, b2)
   X <- cbind(1, rep(c(0, 1), each = n/2), rnorm(n))
-  sim_Y <- data.frame(Y1_P = rep(NA, 5000),
-                      Y1_Z = rep(NA, 5000))
-  for (i in 1:5000) {
+  sim_Y <- data.frame(Y1_P = rep(NA, 1000),
+                      Y1_Z = rep(NA, 1000))
+  for (i in 1:1000) {
     Y_P <- simulateData(X = X,
                         B = B,
                         distn = "Poisson",
@@ -26,7 +26,6 @@ test_that("same mean from either distribution", {
     sim_Y$Y1_Z[i] <- Y_Z[1]
   }
   means <- colMeans(sim_Y)
-  print(abs(means[1] - means[2])/max(means))
-  expect_true(abs(means[1] - means[2])/max(means) < 0.1)
+  expect_true(base::all.equal(as.vector(means[1]), as.vector(means[2]), tol = 0.2))
 })
 

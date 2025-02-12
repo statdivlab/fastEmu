@@ -4,7 +4,12 @@
 \alias{chooseRefSet}
 \title{A function to choose a data-driven reference set.}
 \usage{
-chooseRefSet(fitted_model, reference_set_size = 50)
+chooseRefSet(
+  fitted_model,
+  reference_set_size,
+  reference_set_covariate,
+  constraint_fn
+)
 }
 \arguments{
 \item{fitted_model}{The output from \code{radEmu::emuFit} when applied to data with a
@@ -13,13 +18,24 @@ constraint over all taxa.}
 \item{reference_set_size}{The size of the reference set if it is data-driven, default
 is set to \code{50}. We recommend a reference set of size 30-100 for the best balance
 of computational efficiency and estimation precision.}
+
+\item{reference_set_covariate}{If the reference set is data-driven, which covariates should
+it be chosen relative to. By default, this will be all covariates in the model (ignoring
+the intercept). However, if a model includes a main covariate that will be tested and several
+precision variables, we recommend choosing the reference set with respect to the main
+covariate of interest. This argument should be a vector of numbers that correspond to
+column indices in the \code{X} design matrix.}
+
+\item{constraint_fn}{The constraint function (by default the smoothed median).}
 }
 \value{
-The set of taxa of size \code{reference_set_size} with the smallest absolute
-estimated log fold-differences for the covariate, relative to the smoothed median
-log fold-difference over all taxa. Also a vector of length p (the number of columns
-in the design matrix) of differences between the smoothed median log fold-difference over
-all taxa and the smoothed median log fold-difference over the reference set.
+A list including the set of taxa of size \code{reference_set_size} with the smallest
+absolute L2 norm of estimated log fold-differences for the specified covariate(s), relative to
+the smoothed median log fold-difference over all taxa. Also a vector of length p (the number of
+columns in the design matrix) of differences between the constraint function over log fold-differences
+across all taxa and the constraint function log fold-difference over the reference set. Also
+the estimated B matrix, with each row shifted according to the constraint over the new
+reference set.
 }
 \description{
 A function to choose a data-driven reference set.

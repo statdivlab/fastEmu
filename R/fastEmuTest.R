@@ -128,6 +128,7 @@ fastEmuTest <- function(constraint_cats,
   if (is.null(colnames(Y))) {
     colnames(Y) <- paste0("category_", 1:ncol(Y))
   }
+  J <- ncol(Y)
 
   # estimate using full radEmu model
   if (estimate_full_model) {

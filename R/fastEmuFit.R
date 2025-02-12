@@ -11,6 +11,14 @@
 #' @param reference_set_size The size of the reference set if it is data-driven, default
 #' is set to \code{50}. We recommend a reference set of size 30-100 for the best balance
 #' of computational efficiency and estimation precision.
+#' @param reference_set_covariate If the reference set is data-driven, which covariates should
+#' it be chosen relative to. By default, this will be all covariates in the model (ignoring
+#' the intercept). However, if a model includes a main covariate that will be tested and several
+#' precision variables, we recommend choosing the reference set with respect to the main
+#' covariate of interest. This argument should be a vector of numbers that correspond to
+#' column indices in the \code{X} design matrix. If you don't know which columns correspond to
+#' each covariate in your design matrix, run the function \code{radEmu::make_design_matrix()} to
+#' see the design matrix for your model.
 #' @param Y an n x J matrix or dataframe of nonnegative observations, or a \code{phyloseq}
 #' or \code{TreeSummarizedExperiment} object containing an otu table and sample data.
 #' @param X an n x p matrix or dataframe of covariates (optional, either include \code{X}
@@ -39,18 +47,19 @@
 #' @param verbose provide updates as model is being fitted and score tests are run? Defaults to FALSE.
 #' @param ... Additional arguments to radEmu:::emuFit. See possible arguments with \code{?radEmu::emuFit}.
 #'
-#' @return Sarah UPDATE!!! A list containing elements 'coef', 'included_categories', and 'score_test_hyperparams'.
-#' 'coef' is a matrix with score test statistics and p-values for all parameters tested. 'Included_categories'
-#' is a list of the categories used in the reduced model for each score test that is fit.
-#' 'score_test_hyperparameters' contains parameters and hyperparameters related to estimation under the
-#' null, including whether or not the algorithm converged, which can be helpful for debugging.
-#' The elements in 'Included_categories' and 'score_test_hyperparams' correspond to the tests described
-#' in \code{test_kj} and are in the same order.
-#' If \code{esttimate_full_model} is TRUE, then 'coef' will also include the estimates and optionally
-#' confidence intervals and Wald test p-values for all parameters, estimated from the full model.
-#' Additionally, if \code{estimate_full_model} is TRUE, the return list will also include 'B', 'penalized', 'Y_augmented',
-#' 'z_hat', 'I', and 'Dy'. See the documentation in \code{?radEmu::emuFit} for a description of these
-#' elements.
+#' @return A list that includes all elements of an \code{emuFit} object from \code{radEmu::emuFit()}, as
+#' well as additional elements. See the documentation in \code{?radEmu::emuFit} for a full description of the
+#' elements in an \code{emuFit} object.The \code{emuFit} object includes the matrix \code{coef}, which provides
+#' estimates for all parameters and score statistics and p-values for all parameters that were tested.
+#' The returned object also includes \code{reference_set} and \code{reference_set_names}, which give the
+#' indices of the reference set in terms of columns of the \code{Y} matrix and category names respectively,
+#' of the categories (taxa) that were used as a reference set of "typical taxa" for the identifiability
+#' constraint. Other elements of the list correspond to score tests. \code{included_categories} gives the
+#' set of categories used for the reduced model for each score test, \code{score_test_hyperparams} provides
+#' the hyperparameters related to estimation under the null hypothesis for each score test. If \code{return_null_B}
+#' or \code{return_score_components} were set to \code{TRUE}, then \code{null_B} or \code{score_components}
+#' will also be returned, which respectively give the estimated B values under the null hypothesis and the
+#' components of the robust score test that are run, for each score test.
 #'
 #' @importFrom stats model.matrix
 #' @import radEmu
@@ -59,6 +68,7 @@
 #'
 fastEmuFit <- function(reference_set = "data_driven",
                        reference_set_size = 50,
+                       reference_set_covariate = NULL,
                        Y,
                        X = NULL,
                        formula = NULL,
@@ -124,6 +134,23 @@ fastEmuFit <- function(reference_set = "data_driven",
   J <- ncol(Y)
   p <- ncol(X)
 
+  # check for valid reference set covariate (if data-driven)
+  if (reference_set == "data_driven") {
+    if (is.null(reference_set_covariate)) {
+      reference_set_covariate <- 2:p
+    } else {
+      if (!is.numeric(reference_set_covariate)) {
+        stop("Make sure that `reference_set_covariate` is a numeric value or vector of numeric values. If you don't know which column of the design matrix corresponds to the covariate(s) you want to use, use `radEmu::make_design_matrix()` to view your design matrix.")
+      }
+      if (1 %in% reference_set_covariate) {
+        message("You've included the intercept in your set of covariates to use to determine the data-driven reference set. While we don't recommend this by default, we'll let you do this and hope that you have a good reason!")
+      }
+      if (sum(!(reference_set_covariate %in% 1:p)) > 0) {
+        stop("You've included one or more values in `reference_set_covariate` that is larger than the number of columns of the design matrix. Please try again, and if you don't know which column of the design matrix corresponds to the covariate(s) you want to use, use `radEmu::make_design_matrix()` to view your design matrix.")
+      }
+    }
+  }
+
   # check for valid reference set
   if (reference_set %in% c("data_driven_thin", "data_driven_ss")) {
     stop("Sarah hasn't implemented data-driven reference sets with sample splitting or thinning yet. If you need this, please open a Github issue.")
@@ -149,15 +176,20 @@ fastEmuFit <- function(reference_set = "data_driven",
   }
 
   # check on constraint
+  if (!("constraint_param" %in% names(extra_args))) {
+    constraint_param <- 0.1
+  } else {
+    constraint_param <- extra_args$constraint_param
+  }
   if (!("constraint_fn" %in% names(extra_args))) {
-    if (!("constraint_param" %in% names(extra_args))) {
-      constraint_param <- 0.1
-    } else {
-      constraint_param <- extra_args$constraint_param
-    }
     constraint_fn <- (function(x) radEmu:::pseudohuber_center(x, d = constraint_param))
   } else {
     constraint_fn <- extra_args$constraint_fn
+  }
+  if (!("constraint_grad_fn" %in% names(extra_args))) {
+    constraint_grad_fn <- (function(x) radEmu:::dpseudohuber_center_dx(x, d = constraint_param))
+  } else {
+    constraint_grad_fn <- extra_args$constraint_grad_fn
   }
   if (reference_set == "data-driven" & is.numeric(constraint_fn)) {
     stop("You've set a data-driven reference set, but chosen a constraint function that consists of a single reference category. Please rerun this function, and set `reference_set` to be the index of the taxa that you would like to the be the reference category, or remove the `constraint_fn` argument.")
@@ -166,13 +198,6 @@ fastEmuFit <- function(reference_set = "data_driven",
       stop("You've set a single reference taxon with the `constraint_fn` argument but this doesn't match the argument `reference_set`. Please remove one of these arguments.")
     }
   }
-
-  # right now can't do data-driven reference set for p > 2, add this functionality in later!
-  if (reference_set == "data_driven" & p > 2) {
-    stop("Sarah hasn't implemented data-driven reference sets for multiple covariates or covariate levels yet. Sarah please implement this!!!")
-  }
-
-
 
   # if reference set is data_driven, determine this reference set
   if (reference_set == "data_driven") {
@@ -221,6 +246,7 @@ fastEmuFit <- function(reference_set = "data_driven",
       }
       ref_set_res <- chooseRefSet(fitted_model = fitted_model,
                                   reference_set_size = reference_set_size,
+                                  reference_set_covariate = reference_set_covariate,
                                   constraint_fn = constraint_fn)
       reference_set <- ref_set_res$reference_set
       reference_set_names <- colnames(Y)[reference_set]
@@ -236,6 +262,7 @@ fastEmuFit <- function(reference_set = "data_driven",
       re_est_args$return_wald_p <- return_wald_p
       fitted_model <- do.call(emuFit, re_est_args)
     }
+
   } else {
     # check if fitted model (with reference set) exists, otherwise fit model
     if (is.null(fitted_model) & is.null(B)) {
@@ -331,198 +358,98 @@ fastEmuFit <- function(reference_set = "data_driven",
     }
 
     n_test <- nrow(test_kj)
-    score_res <- NULL
-    included_categories <- vector(mode = "list", length = n_test)
-    score_test_hyperparams <- vector(mode = "list", length = n_test)
-    null_B <- vector(mode = "list", length = n_test)
-    score_pieces <- vector(mode = "list", length = n_test)
-  }
-
-  # next - figure out how to update constraint if not pseudo-Huber
-
-  # set constraint_fn to index if reference set size is 1
-
-  # -------------- OLD ----------------------
-
-  if (run_score) {
-    # prepare to run score tests
-
-    # get X matrix
-    if (is.null(X)) {
-      if (is.null(formula) | is.null(data)) {
-        stop("If design matrix X not provided, both formula and data containing
-covariates in formula must be provided.")
-      }
-      X <- model.matrix(formula, data)
-    }
-    if ("data.frame" %in% class(X)) {
-      X <- as.matrix(X)
-      if (!is.numeric(X)) {
-        stop("X is a data frame that cannot be coerced to a numeric matrix. Please fix and try again.")
-      }
-    }
-    p <- ncol(X)
-
-    if (is.null(test_kj)) {
-      test_kj <- data.frame(expand.grid(k = 2:p, j = 1:J))
-    }
-
-    n_test <- nrow(test_kj)
-    score_res <- NULL
     included_categories <- vector(mode = "list", length = n_test)
     score_test_hyperparams <- vector(mode = "list", length = n_test)
     null_B <- vector(mode = "list", length = n_test)
     score_pieces <- vector(mode = "list", length = n_test)
 
-    if (is.null(model)) {
-      model = "drop"
-    }
-
-    # set constraints for inference
-    # for full model, don't do reordering
-    if (model == "full") {
-      if (estimate_full_model) {
-        constraint_fn_inf <- constraint_fn_est
-        constraint_grad_fn_inf <- constraint_grad_fn_est
-      } else {
-        if (length(constraint_cats) == 1) {
-          constraint_fn_inf <- (function(x) x[constraint_cats])
-          constraint_grad_fn_inf <- function(x) {
-            grad <- rep(0, length(x))
-            grad[constraint_cats] <- 1
-          }
-          # set constraint as pseudo-Huber over constraint categories if there are multiple
-        } else {
-          constraint_fn_inf <- (function(x) {
-            radEmu:::pseudohuber_center(x[constraint_cats], d = .1)
-          })
-          constraint_grad_fn_inf <- (function(x) {
-            grad <- rep(0, length(x))
-            grad[constraint_cats] <-
-              radEmu:::dpseudohuber_center_dx(x[constraint_cats], d = .1)
-            return(grad)
-          })
-        }
+    # check if list of starting values for B under the null has been provided
+    if ("B_null_list" %in% names(extra_args)) {
+      B_null_list <- extra_args$B_null_list
+      if (length(B_null_list) != nrow(test_kj)) {
+        warning("Length of 'B_null_list' is different than the number of tests specified in 'test_kj'. Ignoring object 'B_null_list'.")
+        B_null_list <- NULL
       }
-      # for reduced model, reorder so that constraint categories come first
     } else {
-      # set constraint as single category constraint if there is one value in constraint_cats
-      if (length(constraint_cats) == 1) {
-        constraint_fn_inf <- (function(x) x[1])
-        constraint_grad_fn_inf <- function(x) {
-          grad <- c(1, rep(0, length(x) - 1))
-        }
-        # set constraint as pseudo-Huber over constraint categories if there are multiple
-      } else {
-        constraint_fn_inf <- (function(x) {
-          radEmu:::pseudohuber_center(x[1:length(constraint_cats)], d = .1)
-        })
-        constraint_grad_fn_inf <- (function(x) {
-          grad <- rep(0, length(x))
-          grad[1:length(constraint_cats)] <-
-            radEmu:::dpseudohuber_center_dx(x[1:length(constraint_cats)], d = .1)
-          return(grad)
-        })
+      B_null_list <- NULL
+    }
+
+    # set constraint function and gradient over reference set
+    if (length(reference_set) == 1) {
+      constraint_fn_inf <- (function(x) x[1])
+      constraint_grad_fn_inf <- function(x) {
+        grad <- c(1, rep(0, length(x) - 1))
       }
+    } else {
+      constraint_fn_inf <- (function(x) {
+        constraint_fn(x[1:length(reference_set)])
+      })
+      constraint_grad_fn_inf <- (function(x) {
+        grad <- rep(0, length(x))
+        grad[1:length(reference_set)] <-
+          constraint_grad_fn(x[1:length(reference_set)])
+        return(grad)
+      })
     }
 
     # run score tests
-    if (verbose) {
-      message("Running score tests")
-    }
     for (i_test in 1:n_test) {
-      if (verbose) {
-        message(paste0("Running score test ", i_test))
+      if (verbose %in% c(TRUE, "development")) {
+        message(paste0("Running score test ", i_test, " of ", n_test, "."))
+        start <- proc.time()
       }
 
-      # update model based on model chosen and categories to use
-      if (model == "full") {
-        mod_Y <- Y
-        j_ind <- test_kj$j[i_test]
-      } else {
-        # reorder categories in Y so that constraint categories are in the beginning
-        ind_keep <- c(constraint_cats, test_kj$j[i_test])
-        ind_keep <- unique(ind_keep)
-        if (length(ind_keep) == 1) {
-          stop("If you only have one constraint category, this category cannot also be tested.")
+      # reorder categories in Y so that reference set categories are in the beginning
+      ind_keep <- c(reference_set, test_kj$j[i_test])
+      ind_keep <- unique(ind_keep)
+      if (length(ind_keep) == 1) {
+        stop("If you only have one category in the reference set, this category cannot also be tested.")
+      }
+      new_order <- c(ind_keep, (1:ncol(Y))[-ind_keep])
+      # add in additional categories if needed (so that each observation has at least one
+      # category with non-zero counts)
+      added_cats <- NULL
+      mod_Y <- Y[, ind_keep]
+      if (sum(rowSums(mod_Y) == 0) > 0) {
+        if (verbose == "development") {
+          message("There is at least one observation with no counts across the categories included in this model. Additional categories will be added to the model")
         }
-        new_order <- c(ind_keep, (1:ncol(Y))[-ind_keep])
-
-        added_cats <- NULL
-
-        if (model == "drop") {
+        count_df <- data.frame(id = (1:ncol(Y))[-ind_keep],
+                               counts = colSums(Y)[-ind_keep])
+        count_df$rank <- rank(-count_df$counts, ties.method = "first")
+        added_cats <- c()
+        curr_rank <- 1
+        while (sum(rowSums(mod_Y) == 0) > 0) {
+          cat <- count_df$id[count_df$rank == curr_rank]
+          ind_keep <- c(ind_keep, cat)
           mod_Y <- Y[, ind_keep]
-          # add in additional categories if needed
-          if (sum(rowSums(mod_Y) == 0) > 0) {
-            if (verbose) {
-              message("There is at least one observation with no counts across the categories included in this model. Additional categories will be added to the model")
-            }
-            count_df <- data.frame(id = (1:ncol(Y))[-ind_keep],
-                                   counts = colSums(Y)[-ind_keep])
-            count_df$rank <- rank(-count_df$counts, ties.method = "first")
-            added_cats <- c()
-            curr_rank <- 1
-            while (sum(rowSums(mod_Y) == 0) > 0) {
-              cat <- count_df$id[count_df$rank == curr_rank]
-              ind_keep <- c(ind_keep, cat)
-              mod_Y <- Y[, ind_keep]
-              added_cats <- c(added_cats, cat)
-              curr_rank <- curr_rank + 1
-            }
-          }
-        } else if (model == "agg") {
-          other_cat_sum <- rowSums(Y[, -ind_keep])
-          mod_Y <- cbind(Y[, ind_keep], other_cat_sum)
-        } else {
-          stop("Please use 'full', 'drop', or 'agg' for method argument.")
-        }
-        j_ind <- which(new_order == test_kj$j[i_test])
-      }
-
-      # if we've estimated full model or have B or fitted model as inputs, use these as start
-      upd_B <- NULL
-      if (estimate_full_model) {
-        upd_B <- emu_est$B
-      } else if (!is.null(fitted_model)) {
-        upd_B <- fitted_model$B
-      } else if (!is.null(B)) {
-        upd_B <- B
-      }
-
-      if (!is.null(upd_B)) {
-        if (model != "full") {
-          upd_B <- upd_B[, ind_keep]
+          added_cats <- c(added_cats, cat)
+          curr_rank <- curr_rank + 1
         }
       }
 
-      if (estimate_full_model & penalize) {
-        upd_fitted_model <- emu_est
-        upd_fitted_model$B <- upd_B
-        if (model != "full") {
-          upd_fitted_model$Y_augmented <- upd_fitted_model$Y_augmented[, ind_keep]
-        }
-      } else if (!is.null(fitted_model) & penalize) {
-        upd_fitted_model <- fitted_model
-        upd_fitted_model$B <- upd_B
-        if (model != "full") {
-          upd_fitted_model$Y_augmented <- upd_fitted_model$Y_augmented[, ind_keep]
-        }
-      } else {
-        upd_fitted_model <- NULL
+      j_ind <- which(new_order == test_kj$j[i_test])
+
+      # use estimated B to start
+      upd_result <- result
+      upd_result$B <- upd_result$B[, ind_keep]
+      if (penalize) {
+        upd_result$Y_augmented <- upd_result$Y_augmented[, ind_keep]
       }
 
       # remove arguments we don't want for score tests
       inf_args_rm <- which(names(extra_args) %in%
-                             c("constraint_fn", "constraint_grad_fn", "constraint_param"))
+                             c("constraint_fn", "constraint_grad_fn", "constraint_param",
+                               "B_null_list", "use_fullmodel_info", "use_fullmodel_cov",
+                               "use_both_cov", "return_both_score_pvals", "match_row_names"))
       inf_args <- list(Y = mod_Y,
                        X = X,
                        formula = formula,
                        data = data,
                        cluster = cluster,
                        penalize = penalize,
-                       B = upd_B,
-                       fitted_model = upd_fitted_model,
-                       refit = refit,
+                       fitted_model = upd_result,
+                       refit = FALSE,
                        test_kj = data.frame(k = test_kj$k[i_test],
                                             j = j_ind),
                        return_wald_p = FALSE,
@@ -530,7 +457,15 @@ covariates in formula must be provided.")
                        constraint_fn = constraint_fn_inf,
                        constraint_grad_fn = constraint_grad_fn_inf,
                        constraint_param = NA,
-                       verbose = verbose)
+                       use_both_cov = FALSE,
+                       use_fullmodel_info = FALSE,
+                       use_fullmodel_cov = FALSE,
+                       return_both_score_pvals = FALSE,
+                       match_row_names = FALSE,
+                       verbose = verbose == "development")
+      if (!(is.null(B_null_list))) {
+        inf_args$B_null_list <- B_null_list[[i_test]]
+      }
       if (length(inf_args_rm) > 0) {
         modified_extra_args <- extra_args[-inf_args_rm]
       } else {
@@ -539,14 +474,11 @@ covariates in formula must be provided.")
       inf_args <- c(inf_args, modified_extra_args)
       # run score tests
       emuObj <- do.call(emuFit, inf_args)
-      cols_rm <- which(names(emuObj$coef) %in% c("category_num", "estimate", "se", "lower", "upper"))
+      cols_rm <- which(names(emuObj$coef) %in% c("category_num", "estimate", "se", "lower", "upper", "zero_comparison"))
       row_data <- emuObj$coef[j_ind, -cols_rm]
-      score_res <- rbind(score_res, row_data)
-      if (estimate_full_model) {
-        ind <- which(emu_est$coef$covariate == row_data$covariate &
-                       emu_est$coef$category == row_data$category)
-        emu_est$coef[ind, names(row_data)] <- row_data
-      }
+      ind <- which(result$coef$covariate == row_data$covariate &
+                       result$coef$category == row_data$category)
+      result$coef[ind, names(row_data)] <- row_data
       included_categories[[i_test]] <- emuObj$coef$category
       score_test_hyperparams[[i_test]] <- emuObj$score_test_hyperparams
       if ("null_B" %in% names(emuObj)) {
@@ -555,39 +487,37 @@ covariates in formula must be provided.")
       if ("score_components" %in% names(emuObj)) {
         score_pieces[[i_test]] <- emuObj$score_components[[1]]
       }
+      if (verbose %in% c(TRUE, "development")) {
+        end <- proc.time() - start
+        sec <- round(end[3])
+        if (sec <= 300) {
+          time <- paste0(sec, " seconds")
+        } else if (sec <= 18000) {
+          min <- round(sec / 60)
+          time <- paste0(min, " minutes")
+        } else {
+          hour <- round(sec / (60^2))
+          time <- paste0(hour, " hours")
+        }
+        message(paste("Score test ", i_test, " of ", n_test,
+                      " has completed in approximately ", time, ".",sep = ""))
+
+      }
     }
-  }
-
-  if (estimate_full_model) {
-
-    # add column in coef about constraint categories
-    emu_est$coef$constraint_cat <- emu_est$coef$category %in% colnames(Y)[constraint_cats]
-
-    res <- emu_est
-  } else {
-    # reorder coef
-    cov_order <- unique(score_res$covariate)
-    cat_order <- colnames(Y)
-    reordered <- order(sapply(score_res$covariate, function(x) {which(cov_order == x)}),
-                       sapply(score_res$category, function(x) {which(cat_order == x)}))
-    score_res <- score_res[reordered, ]
-
-    # add column in coef about constraint categories
-    score_res$constraint_cat <- score_res$category %in% colnames(Y)[constraint_cats]
-
-    res <- list()
-    res$coef <- score_res
-  }
-  if (run_score) {
-    res$included_categories <- included_categories
-    res$score_test_hyperparams <- score_test_hyperparams
+    # add additional information from running score tests
+    result$included_categories <- included_categories
+    result$score_test_hyperparams <- score_test_hyperparams
     if (!is.null(null_B[[1]])) {
-      res$null_B <- null_B
+      result$null_B <- null_B
     }
     if (!is.null(score_pieces[[1]])) {
-      res$score_components <- score_pieces
+      result$score_components <- score_pieces
     }
   }
 
-  return(res)
+  # add column to coef data frame for reference set
+  result$coef$reference_set_category <- result$coef$category %in% reference_set_names
+
+  # return object
+  return(result)
 }
