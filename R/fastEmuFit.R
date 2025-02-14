@@ -84,11 +84,20 @@ fastEmuFit <- function(reference_set = "data_driven",
                        verbose = FALSE,
                        ...) {
 
-  # Record call
+  # record call
   call <- match.call(expand.dots = FALSE)
 
-  # start by running radEmu checks
+  # record extra arguments
   extra_args <- list(...)
+
+  # if unsupported arguments included, warn user
+  unsupported <- c("use_both_cov", "use_fullmodel_info",
+                   "use_fullmodel_cov", "return_both_score_pvals")
+  if (sum(names(extra_args) %in% unsupported) > 0) {
+    warning("You have used one of the following arguments: `use_both_cov`, `use_fullmodel_info`, `use_fullmodel_cov`, or `return_both_score_pvals`. These arguments are not supported in `fastEmu` and will be ignored.")
+  }
+
+  # start by running radEmu checks
   if (!("assay_name" %in% names(extra_args))) {
     assay_name <- NULL
   } else {
@@ -135,7 +144,7 @@ fastEmuFit <- function(reference_set = "data_driven",
   p <- ncol(X)
 
   # check for valid reference set covariate (if data-driven)
-  if (reference_set == "data_driven") {
+  if (length(reference_set) == 1 && reference_set == "data_driven") {
     if (is.null(reference_set_covariate)) {
       reference_set_covariate <- 2:p
     } else {
@@ -152,9 +161,9 @@ fastEmuFit <- function(reference_set = "data_driven",
   }
 
   # check for valid reference set
-  if (reference_set %in% c("data_driven_thin", "data_driven_ss")) {
+  if (length(reference_set) == 1 && reference_set %in% c("data_driven_thin", "data_driven_ss")) {
     stop("Sarah hasn't implemented data-driven reference sets with sample splitting or thinning yet. If you need this, please open a Github issue.")
-  } else if (reference_set == "data_driven") {
+  } else if (length(reference_set) == 1 && reference_set == "data_driven") {
     reference_set <- "data_driven"
   } else {
     if (is.numeric(reference_set)) {
@@ -191,52 +200,59 @@ fastEmuFit <- function(reference_set = "data_driven",
   } else {
     constraint_grad_fn <- extra_args$constraint_grad_fn
   }
-  if (reference_set == "data-driven" & is.numeric(constraint_fn)) {
+  if (length(reference_set) == 1 && reference_set == "data-driven" & is.numeric(constraint_fn)) {
     stop("You've set a data-driven reference set, but chosen a constraint function that consists of a single reference category. Please rerun this function, and set `reference_set` to be the index of the taxa that you would like to the be the reference category, or remove the `constraint_fn` argument.")
   } else if (is.numeric(constraint_fn) & is.numeric(reference_set)) {
-    if (reference_set != constraint_fn) {
+    if (length(reference_set) > 1 || reference_set != constraint_fn) {
       stop("You've set a single reference taxon with the `constraint_fn` argument but this doesn't match the argument `reference_set`. Please remove one of these arguments.")
     }
   }
 
   # if reference set is data_driven, determine this reference set
-  if (reference_set == "data_driven") {
+  if (length(reference_set) == 1 && reference_set == "data_driven") {
     if (verbose %in% c(TRUE, "development")) {
       message("Running estimation algorithm to determine reference set.")
     }
     if (!(is.null(fitted_model)) & "reference_set" %in% names(fitted_model)) {
       message("You have set `reference_set = data_driven` but provided a `fitted_model` that already includes a `reference_set`. This reference set will be used. If you would like the reference set to be recalculated, set `fitted_model$reference_set <- NULL` and rerun this function.")
       reference_set <- fitted_model$reference_set
+      reference_set_names <- fitted_model$reference_set_names
+      if ("constraint_diff" %in% names(fitted_model)) {
+        constraint_diff <- fitted_model$constraint_diff
+      } else {
+        constraint_diff <- NULL
+      }
     } else {
+      # remove arguments from ... that we don't want for estimation for reference set or for re-estimation for confidence intervals
+      est_args_rm <- which(names(extra_args) %in%
+                             c("run_score_tests", "use_both_cov", "use_fullmodel_info",
+                               "use_fullmodel_cov", "return_both_score_pvals", "match_row_names"))
+      est_args <- list(Y = Y,
+                       X = X,
+                       cluster = cluster,
+                       penalize = penalize,
+                       B = B,
+                       fitted_model = fitted_model,
+                       refit = refit,
+                       test_kj = test_kj,
+                       return_wald_p = FALSE,
+                       compute_cis = FALSE,
+                       verbose = ifelse(verbose == "development", "development", FALSE),
+                       run_score_tests = FALSE,
+                       use_both_cov = FALSE,
+                       use_fullmodel_info = FALSE,
+                       use_fullmodel_cov = FALSE,
+                       return_both_score_pvals = FALSE,
+                       match_row_names = FALSE)
+      if (length(est_args_rm) > 0) {
+        modified_extra_args <- extra_args[-est_args_rm]
+      } else {
+        modified_extra_args <- extra_args
+      }
+      est_args <- c(est_args, modified_extra_args)
       if (is.null(fitted_model) & is.null(B)) {
-        # estimate with radEmu::emuFit
 
-        # remove arguments from ... that we don't want for estimation for reference set
-        est_args_rm <- which(names(extra_args) %in%
-                               c("run_score_tests", "use_both_cov", "use_fullmodel_info",
-                                 "use_fullmodel_cov", "return_both_score_pvals", "match_row_names"))
-        est_args <- list(Y = Y,
-                         X = X,
-                         cluster = cluster,
-                         penalize = penalize,
-                         B = B,
-                         fitted_model = fitted_model,
-                         refit = refit,
-                         return_wald_p = FALSE,
-                         compute_cis = FALSE,
-                         verbose = (verbose == "development"),
-                         run_score_tests = FALSE,
-                         use_both_cov = FALSE,
-                         use_fullmodel_info = FALSE,
-                         use_fullmodel_cov = FALSE,
-                         return_both_score_pvals = FALSE,
-                         match_row_names = FALSE)
-        if (length(est_args_rm) > 0) {
-          modified_extra_args <- extra_args[-est_args_rm]
-        } else {
-          modified_extra_args <- extra_args
-        }
-        est_args <- c(est_args, modified_extra_args)
+        # estimate with radEmu::emuFit
         fitted_model <- do.call(emuFit, est_args)
       }
 
@@ -254,25 +270,56 @@ fastEmuFit <- function(reference_set = "data_driven",
       new_B <- ref_set_res$new_B
 
       # rerun emuFit (using new B) to update coef data frame
+      # update constraint functions based on reference set
+      constraint_fn_est <- (function(x) {
+        constraint_fn(x[reference_set])
+      })
+      constraint_grad_fn_est <- (function(x) {
+        grad <- rep(0, length(x))
+        grad[reference_set] <-
+          constraint_grad_fn(x[reference_set])
+        return(grad)
+      })
       re_est_args <- est_args
+      re_est_args$constraint_fn <- constraint_fn_est
+      re_est_args$constraint_param <- NA
+      re_est_args$constraint_grad_fn <- constraint_grad_fn_est
       re_est_args$fitted_model <- NULL
       re_est_args$B <- new_B
       re_est_args$refit <- FALSE
       re_est_args$compute_cis <- compute_cis
       re_est_args$return_wald_p <- return_wald_p
+      if (verbose == "development") {
+        message("Optionally computing confidence intervals and Wald p-values")
+      }
       fitted_model <- do.call(emuFit, re_est_args)
     }
 
   } else {
+    constraint_diff <- NULL
+
+    # update constraint functions based on reference set
+    constraint_fn_est <- (function(x) {
+      constraint_fn(x[reference_set])
+    })
+    constraint_grad_fn_est <- (function(x) {
+      grad <- rep(0, length(x))
+      grad[reference_set] <-
+        constraint_grad_fn(x[reference_set])
+      return(grad)
+    })
+
     # check if fitted model (with reference set) exists, otherwise fit model
     if (is.null(fitted_model) & is.null(B)) {
       if (verbose %in% c(TRUE, "development")) {
         message("Running estimation algorithm.")
       }
+
       # remove arguments from ... that we don't want for estimation for reference set
       est_args_rm <- which(names(extra_args) %in%
                              c("run_score_tests", "use_both_cov", "use_fullmodel_info",
-                               "use_fullmodel_cov", "return_both_score_pvals", "match_row_names"))
+                               "use_fullmodel_cov", "return_both_score_pvals", "match_row_names",
+                               "constraint_fn", "constraint_grad_fn", "constraint_param"))
       est_args <- list(Y = Y,
                        X = X,
                        cluster = cluster,
@@ -280,8 +327,12 @@ fastEmuFit <- function(reference_set = "data_driven",
                        B = B,
                        fitted_model = fitted_model,
                        refit = refit,
-                       verbose = (verbose == "development"),
+                       test_kj = test_kj,
+                       verbose = ifelse(verbose == "development", "development", FALSE),
                        run_score_tests = FALSE,
+                       constraint_fn = constraint_fn_est,
+                       constraint_grad_fn = constraint_grad_fn_est,
+                       constraint_param = NA,
                        use_both_cov = FALSE,
                        use_fullmodel_info = FALSE,
                        use_fullmodel_cov = FALSE,
@@ -300,29 +351,34 @@ fastEmuFit <- function(reference_set = "data_driven",
       }
       if (!("reference_set" %in% names(fitted_model))) {
         # check whether constraint has already been set
-        if (all.equal(constraint_fn(fitted_model$B[1, reference_set]), 0, 0.0001)) {
+        if (all.equal(constraint_fn(fitted_model$B[1, reference_set]), 0, 0.0001) == TRUE) {
           new_B <- fitted_model$B
         } else {
           new_B <- fitted_model$B
           p <- nrow(fitted_model$B)
           for (k in 1:p) {
-            new_B[k, ] <- new_B[k, ] - constraint_fn(new_B[k, ])
+            new_B[k, ] <- new_B[k, ] - constraint_fn(new_B[k, reference_set])
           }
         }
 
         # remove arguments from ... that we don't want for estimation for reference set
         est_args_rm <- which(names(extra_args) %in%
                                c("run_score_tests", "use_both_cov", "use_fullmodel_info",
-                                 "use_fullmodel_cov", "return_both_score_pvals", "match_row_names"))
+                                 "use_fullmodel_cov", "return_both_score_pvals", "match_row_names",
+                                 "constraint_fn", "constraint_grad_fn", "constraint_param"))
         est_args <- list(Y = Y,
                          X = X,
                          cluster = cluster,
                          penalize = penalize,
                          B = new_B,
                          fitted_model = NULL,
+                         test_kj = test_kj,
                          refit = FALSE,
-                         verbose = (verbose == "development"),
+                         verbose = ifelse(verbose == "development", "development", FALSE),
                          run_score_tests = FALSE,
+                         constraint_fn = constraint_fn_est,
+                         constraint_grad_fn = constraint_grad_fn_est,
+                         constraint_param = NA,
                          use_both_cov = FALSE,
                          use_fullmodel_info = FALSE,
                          use_fullmodel_cov = FALSE,
@@ -462,9 +518,9 @@ fastEmuFit <- function(reference_set = "data_driven",
                        use_fullmodel_cov = FALSE,
                        return_both_score_pvals = FALSE,
                        match_row_names = FALSE,
-                       verbose = verbose == "development")
+                       verbose = ifelse(verbose == "development", "development", FALSE))
       if (!(is.null(B_null_list))) {
-        inf_args$B_null_list <- B_null_list[[i_test]]
+        inf_args$B_null_list <- list(B_null_list[[i_test]])
       }
       if (length(inf_args_rm) > 0) {
         modified_extra_args <- extra_args[-inf_args_rm]

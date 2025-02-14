@@ -28,8 +28,13 @@ chooseRefSet <- function(fitted_model,
                          reference_set_covariate,
                          constraint_fn) {
 
-  B_df <- data.frame(index = 1:ncol(fitted_model$B),
-                     l2_lfd = sqrt(colSums(fitted_model$B[reference_set_covariate, ]^2)))
+  if (length(reference_set_covariate) == 1) {
+    B_df <- data.frame(index = 1:ncol(fitted_model$B),
+                       l2_lfd = sqrt(fitted_model$B[reference_set_covariate, ]^2))
+  } else {
+    B_df <- data.frame(index = 1:ncol(fitted_model$B),
+                       l2_lfd = sqrt(colSums(fitted_model$B[reference_set_covariate, ]^2)))
+  }
   B_ord <- order(B_df$l2_lfd)
   B_df <- B_df[B_ord, ]
   if (reference_set_size > nrow(B_df)) {

@@ -61,7 +61,7 @@ test_that("fastEmu can work with additional arguments", {
 #
 # })
 
-test_that("fastEmu controls Type I error rate when it should", {
+test_that("fastEmuTest controls Type I error rate when it should", {
 
   skip("skipping this in automatic tests because it is slow")
 
@@ -87,7 +87,7 @@ test_that("fastEmu controls Type I error rate when it should", {
 
 })
 
-test_that("fastEmu has power that increases with sample size and signal magnitude", {
+test_that("fastEmuTest has power that increases with sample size and signal magnitude", {
 
   skip("skipping this in automatic tests because it is slow")
 
