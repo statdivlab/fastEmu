@@ -123,6 +123,12 @@ fastEmuFit <- function(reference_set = "data_driven",
   } else {
     unobserved_taxon_error <- extra_args$unobserved_taxon_error
   }
+  # run score tests
+  if ("run_score_tests" %in% names(extra_args)) {
+    run_score_tests <- extra_args$run_score_tests
+  } else {
+    run_score_tests <- TRUE
+  }
   check_results <- radEmu:::emuFit_check(Y = Y,
                                          X = X,
                                          formula = formula,
@@ -134,7 +140,8 @@ fastEmuFit <- function(reference_set = "data_driven",
                                          match_row_names = match_row_names,
                                          verbose = verbose,
                                          remove_zero_comparison_pvals = remove_zero_comparison_pvals,
-                                         unobserved_taxon_error = unobserved_taxon_error)
+                                         unobserved_taxon_error = unobserved_taxon_error,
+                                         run_score_tests = run_score_tests)
   Y <- check_results$Y
   X <- check_results$X
   cluster <- check_results$cluster
@@ -401,12 +408,6 @@ fastEmuFit <- function(reference_set = "data_driven",
     result$constraint_diff <- constraint_diff
   }
 
-  # run score tests
-  if ("run_score_tests" %in% names(extra_args)) {
-    run_score_tests <- extra_args$run_score_tests
-  } else {
-    run_score_tests <- TRUE
-  }
 
   if (run_score_tests) {
     if (is.null(test_kj)) {
