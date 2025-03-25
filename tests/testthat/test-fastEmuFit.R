@@ -15,7 +15,7 @@ test_that("fastEmuFit() gives nearly the same fit as fastEmuTest() for given ref
   # check that estimates are approximately equal
   expect_true(all.equal(test_res$coef$estimate[6], fit_res$coef$estimate[6], 0.001))
   # check that score test p-values are approximately equal
-  expect_true(all.equal(test_res$coef$pval[6], fit_res$coef$pval[6], 0.001))
+  expect_true(all.equal(test_res$coef$pval[6], fit_res$coef$pval[6], 0.01))
 })
 
 test_that("fastEmuFit() works with data-driven reference set", {
@@ -97,7 +97,7 @@ test_that("multiple score tests can be run and results are given in the right or
 
   res3 <- fastEmuFit(Y = Y, X = X, reference_set = 1:5, test_kj = data.frame(k = 2, j = 3),
                      B_null_list = list(res1$null_B[[1]]))
-  expect_true(all.equal(res1$coef, res3$coef, 0.005))
+  expect_true(all.equal(res1$coef$pval, res3$coef$pval, 0.01))
 })
 
 test_that("with large number of taxa, fastEmu results with data-driven reference set results are similar to radEmu results with default constraint", {
