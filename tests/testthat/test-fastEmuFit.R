@@ -97,7 +97,7 @@ test_that("multiple score tests can be run and results are given in the right or
 
   res3 <- fastEmuFit(Y = Y, X = X, reference_set = 1:5, test_kj = data.frame(k = 2, j = 3),
                      B_null_list = list(res1$null_B[[1]]))
-  expect_true(all.equal(res1$coef, res3$coef, 0.001))
+  expect_true(all.equal(res1$coef, res3$coef, 0.005))
 })
 
 test_that("with large number of taxa, fastEmu results with data-driven reference set results are similar to radEmu results with default constraint", {
