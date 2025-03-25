@@ -123,6 +123,21 @@ fastEmuFit <- function(reference_set = "data_driven",
   } else {
     unobserved_taxon_error <- extra_args$unobserved_taxon_error
   }
+  if (!("constraint_fn" %in% names(extra_args))) {
+    constraint_fn <- radEmu:::pseudohuber_center
+  } else {
+    constraint_fn <- extra_args$constraint_fn
+  }
+  if (!("constraint_grad_fn" %in% names(extra_args))) {
+    constraint_grad_fn <- radEmu:::dpseudohuber_center_dx
+  } else {
+    constraint_grad_fn <- extra_args$constraint_grad_fn
+  }
+  if (!("constraint_param" %in% names(extra_args))) {
+    constraint_param <- 0.1
+  } else {
+    constraint_param <- extra_args$constraint_param
+  }
   # run score tests
   if ("run_score_tests" %in% names(extra_args)) {
     run_score_tests <- extra_args$run_score_tests
@@ -141,6 +156,9 @@ fastEmuFit <- function(reference_set = "data_driven",
                                          verbose = verbose,
                                          remove_zero_comparison_pvals = remove_zero_comparison_pvals,
                                          unobserved_taxon_error = unobserved_taxon_error,
+                                         constraint_fn = constraint_fn,
+                                         constraint_grad_fn = constraint_grad_fn,
+                                         constraint_param = constraint_param,
                                          run_score_tests = run_score_tests)
   Y <- check_results$Y
   X <- check_results$X
@@ -149,6 +167,9 @@ fastEmuFit <- function(reference_set = "data_driven",
   n <- nrow(X)
   J <- ncol(Y)
   p <- ncol(X)
+  constraint_fn <- check_results$constraint_fn
+  constraint_grad_fn <- check_results$constraint_grad_fn
+  constraint_param <- check_results$constraint_param
 
   # check for valid reference set covariate (if data-driven)
   if (length(reference_set) == 1 && reference_set == "data_driven") {
