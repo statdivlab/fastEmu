@@ -10,7 +10,7 @@
 #' splitting or Poisson thinning respectively. The reference set can either be a single
 #' object, or a list of objects of length \code{p}, for each row of the \code{beta} matrix.
 #' @param reference_set_size The size of the reference set if it is data-driven, default
-#' is set to \code{50}. We recommend a reference set of size 30-100 for the best balance
+#' is set to \code{30}. We recommend a reference set of size 30-100 for the best balance
 #' of computational efficiency and estimation precision.
 #' @param Y an n x J matrix or dataframe of nonnegative observations, or a \code{phyloseq}
 #' or \code{TreeSummarizedExperiment} object containing an otu table and sample data.
@@ -165,6 +165,10 @@ fastEmuFit <- function(reference_set = "data_driven",
     n <- nrow(X)
     J <- ncol(Y)
     p <- ncol(X)
+    old_constraint_fn <- constraint_fn
+    if (length(old_constraint_fn) == 1) {
+      old_constraint_fn <- rep(list(old_constraint_fn), p)
+    }
     constraint_fn <- check_results$constraint_fn
     constraint_grad_fn <- check_results$constraint_grad_fn
     constraint_param <- check_results$constraint_param
@@ -186,8 +190,12 @@ fastEmuFit <- function(reference_set = "data_driven",
 
     for (k in 1:p) {
       ref_set <- reference_set[[k]]
+      ref_set_names <- NULL
       if (length(ref_set) == 1 && ref_set == "data_driven") {
         ref_set <- "data_driven"
+        if (is.numeric(constraint_fn[[k]])) {
+          stop("You've set a data-driven reference set, but chosen a constraint function that consists of a single reference category. Please rerun this function, and set `reference_set` to be the index of the taxa that you would like to the be the reference category, or remove the `constraint_fn` argument.")
+        }
       } else {
         if (is.numeric(ref_set)) {
           if (sum(!(ref_set %in% 1:ncol(Y))) > 0) {
@@ -196,7 +204,8 @@ fastEmuFit <- function(reference_set = "data_driven",
           if (!(is.null(colnames(Y)))) {
             ref_set_names <- colnames(Y)[ref_set]
           } else {
-            ref_set_names <- NULL
+            colnames(Y) <- paste0("taxon", 1:ncol(Y))
+            ref_set_names <- colnames(Y)[ref_set]
           }
         } else if (is.character(ref_set)) {
           if (sum(!(ref_set %in% colnames(Y))) > 0) {
@@ -204,6 +213,11 @@ fastEmuFit <- function(reference_set = "data_driven",
           }
           ref_set_names <- ref_set
           ref_set <- which(colnames(Y) %in% ref_set)
+        }
+        if (is.numeric(old_constraint_fn[[k]])) {
+          if (length(ref_set > 1) || ref_set != old_constraint_fn[[k]]) {
+            stop("You've set a single reference taxon for covariate ", k, " with the `constraint_fn` argument but this doesn't match the argument `reference_set` for covariate ", k, ". Please remove one of these arguments.")
+          }
         }
       }
 
@@ -260,6 +274,7 @@ fastEmuFit <- function(reference_set = "data_driven",
         fitted_model$B <- B
       }
       # choose reference sets
+      new_B <- fitted_model$B
       for (k in 1:p) {
         if (length(reference_set[[k]]) == 1 && reference_set[[k]] == "data_driven") {
           # choose reference set
@@ -268,13 +283,15 @@ fastEmuFit <- function(reference_set = "data_driven",
                                       reference_set_size = reference_set_size,
                                       constraint_fn = constraint_fn[[k]])
           reference_set[[k]] <- ref_set_res$reference_set
-          reference_set_names[[k]] <- colnames(Y)[reference_set]
+          reference_set_names[[k]] <- colnames(Y)[reference_set[[k]]]
           constraint_diff[k] <- ref_set_res$constraint_diff
-          new_B <- ref_set_res$new_B
+          new_B[k, ] <- ref_set_res$new_B[k, ]
+        } else {
+          new_B[k, ] <- new_B[k, ] - constraint_fn[[k]](new_B[k, reference_set[[k]]])
         }
       }
       constraint_fn_est <- constraint_fn
-      constraint_grad_fn_est <- constraint_grad_fn_est
+      constraint_grad_fn_est <- constraint_grad_fn
       for (k in 1:p) {
         constraint_fn_est[[k]] <- (function(k) {
           force(k)
@@ -593,8 +610,9 @@ fastEmuFit <- function(reference_set = "data_driven",
   cov_name <- unique(result$coef$covariate)
   for (k in 1:length(cov_name)) {
     cov_ind <- which(result$coef$covariate == cov_name[k])
-    ref_set_cat[cov_ind] <- result$coef$category[cov_ind] %in% reference_set_names[[k]]
+    ref_set_cat[cov_ind] <- result$coef$category[cov_ind] %in% result$reference_set_names[[k + 1]]
   }
+  result$coef$reference_category <- ref_set_cat
 
   # return object
   return(structure(result, class = "fastEmuFit"))

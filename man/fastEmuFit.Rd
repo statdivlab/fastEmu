@@ -16,7 +16,7 @@ fastEmuFit(
   penalize = TRUE,
   B = NULL,
   fitted_model = NULL,
-  refit = FALSE,
+  refit = TRUE,
   fastEmu_refit = FALSE,
   return_wald_p = FALSE,
   compute_cis = TRUE,
@@ -37,7 +37,7 @@ splitting or Poisson thinning respectively. The reference set can either be a si
 object, or a list of objects of length \code{p}, for each row of the \code{beta} matrix.}
 
 \item{reference_set_size}{The size of the reference set if it is data-driven, default
-is set to \code{50}. We recommend a reference set of size 30-100 for the best balance
+is set to \code{30}. We recommend a reference set of size 30-100 for the best balance
 of computational efficiency and estimation precision.}
 
 \item{Y}{an n x J matrix or dataframe of nonnegative observations, or a \code{phyloseq}
@@ -68,7 +68,7 @@ B will be initiated as a zero matrix.}
 full unrestricted model. Default is NULL.}
 
 \item{refit}{logical: if B or fitted_model is provided, in the \code{radEmu} estimation step,
-should estimation be rerun? Default is FALSE.}
+should estimation be rerun? Default is TRUE.}
 
 \item{fastEmu_refit}{logical: if fitted_model is provided that has been produced by a call to
 \code{fastEmu::fastEmuFit}, should estimation and reference set step be skipped (FALSE), e.g.

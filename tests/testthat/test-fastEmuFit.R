@@ -25,7 +25,7 @@ test_that("fastEmuFit() works with data-driven reference set", {
   rad_ref <- data.frame(ind = 1:ncol(Y), abs_est = abs(rad_res$coef$estimate))
   rad_ord <- order(rad_ref$abs_est)
   ref <- rad_ref$ind[rad_ord[1:5]]
-  expect_equal(ref, dd_ref_res$reference_set)
+  expect_equal(ref, dd_ref_res$reference_set[[2]])
 })
 
 test_that("when fastEmuFit() is run, warning from match_row_names = TRUE is only run once", {
@@ -37,17 +37,13 @@ test_that("when fastEmuFit() is run, warning from match_row_names = TRUE is only
 })
 
 test_that("fastEmuFit() gives appropriate errors/warnings/messages related to reference set covariate, reference set number, and reference set vs constraint function mismatch", {
-  # errors and messages related to reference set covariate
-  expect_error(fastEmuFit(X = X, Y = Y, reference_set_covariate = "covariateA"))
-  expect_error(fastEmuFit(X = X, Y = Y, reference_set_covariate = 3))
-  expect_message(fit <- fastEmuFit(X = X, Y = Y, reference_set_covariate = 1, run_score_tests = FALSE, reference_set_size = 1))
-  # message related to reference set size
+   # message related to reference set size
   expect_message(fit <- fastEmuFit(X = X, Y = Y, run_score_tests = FALSE, reference_set_size = 11))
   # errors related to reference set
-  expect_error(fastEmuFit(X = X, Y = Y, reference_set = 1:11))
-  expect_error(fastEmuFit(X = X, Y = Y, reference_set = c("OTU1", "OTU2")))
-  expect_error(fastEmuFit(X = X, Y = Y, reference_set = 1:2, constraint_fn = 3))
-  expect_error(fastEmuFit(X = X, Y = Y, reference_set = 2, constraint_fn = 3))
+  expect_error(fastEmuFit(X = X, Y = Y, reference_set = 1:11, run_score_tests = FALSE))
+  expect_error(fastEmuFit(X = X, Y = Y, reference_set = c("OTU1", "OTU2"), run_score_tests = FALSE))
+  expect_error(fastEmuFit(X = X, Y = Y, reference_set = 1:2, constraint_fn = 3, run_score_tests = FALSE))
+  expect_error(fastEmuFit(X = X, Y = Y, reference_set = 2, constraint_fn = 3, run_score_tests = FALSE))
   # check that correctly giving reference set as indices or column names provides the same results
   fit1 <- fastEmuFit(X = X, Y = Y, run_score_tests = FALSE, reference_set = 1:2)
   fit2 <- fastEmuFit(X = X, Y = Y, run_score_tests = FALSE, reference_set = c("taxon2", "taxon1"))
@@ -100,6 +96,59 @@ test_that("multiple score tests can be run and results are given in the right or
   expect_true(all.equal(res1$coef$pval, res3$coef$pval, 0.01))
 })
 
+test_that("p > 2 works, with multiple reference sets", {
+  n <- 50
+  J <- 10
+  b0 <- rnorm(J)
+  b1 <- rnorm(J)
+  b2 <- rnorm(J)
+  X_alt <- cbind(1, rep(0:1, each = n / 2), rnorm(J))
+  Y_alt <- simulateData(X_alt, rbind(b0, b1, b2), distn = "Poisson", mean_count_before_ZI = 50)
+  rownames(X_alt) <- paste0("sample", 1:nrow(X_alt))
+  rownames(Y_alt) <- rownames(X_alt)
+  colnames(Y_alt) <- paste0("taxon", 1:ncol(Y_alt))
+
+  # all data-driven
+  res1 <- fastEmuFit(Y = Y_alt, X = X_alt, test_kj = data.frame(k = 2, j = 3), reference_set_size = 5)
+  expect_true(all.equal(sort(res1$reference_set[[2]]), which(res1$coef$reference_category[1:10])))
+  expect_true(all.equal(radEmu:::pseudohuber_center(res1$B[1, res1$reference_set[[1]]], 0.1),
+                        0, tolerance = 1e-5))
+  expect_true(all.equal(radEmu:::pseudohuber_center(res1$B[3, res1$reference_set[[3]]], 0.1),
+                        0, tolerance = 1e-5))
+
+  # some data-driven, some set already
+  res2 <- fastEmuFit(Y = Y_alt, X = X_alt, test_kj = data.frame(k = 2, j = 3),
+                     reference_set = list("data_driven", 3:5, 2), reference_set_size = 5)
+  expect_true(length(res2$reference_set[[1]]) == 5)
+  expect_true(all.equal(res2$reference_set[[2]], 3:5))
+  expect_true(res2$reference_set[[3]] == 2)
+  expect_true(all.equal(radEmu:::pseudohuber_center(res2$B[1, res2$reference_set[[1]]], 0.1),
+                        0, tolerance = 1e-5))
+  expect_true(all.equal(radEmu:::pseudohuber_center(res2$B[2, res2$reference_set[[2]]], 0.1),
+                        0, tolerance = 1e-5))
+  expect_true(res2$B[3, 2] == 0)
+})
+
+test_that("multiple constraint functions", {
+  mean_grad <- function(x) {
+    grad <- rep(1/length(x), length(x))
+  }
+  res1 <- fastEmuFit(Y = Y, X = X, test_kj = data.frame(k = 2, j = 3), reference_set_size = 5,
+                     constraint_fn = list(radEmu:::pseudohuber_center, mean),
+                     constraint_grad_fn = list(radEmu:::dpseudohuber_center_dx, mean_grad))
+  expect_true(all.equal(radEmu:::pseudohuber_center(res1$B[1, res1$reference_set[[1]]], 0.1), 0,
+                        tolerance = 1e-6))
+  expect_true(all.equal(mean(res1$B[2, res1$reference_set[[2]]]), 0, tolerance = 1e-6))
+})
+
+
+
+
+
+
+
+# the following tests are skipped because they take a long time!
+
 test_that("with large number of taxa, fastEmu results with data-driven reference set results are similar to radEmu results with default constraint", {
 
   skip("skipping this in automatic tests because with large J, radEmu robust score tests are slow.")
@@ -117,7 +166,7 @@ test_that("with large number of taxa, fastEmu results with data-driven reference
   rad_res <- radEmu::emuFit(Y = Y, X = X, test_kj = data.frame(k = 2, j = 1:5), verbose = TRUE, tolerance = 0.001, B_null_tol = 0.01)
   expect_true(dd_ref_res$constraint_diff[2] < 0.05)
   # there may be some larger differences, but this is helpful to look at
-  # all.equal(dd_ref_res$coef$pval[1:5], rad_res$coef$pval[1:5], 0.25))
+  expect_true(all.equal(dd_ref_res$coef$score_stat[1:5], rad_res$coef$score_stat[1:5], tolerance = 0.1))
 })
 
 test_that("fastEmuFit controls Type I error rate, with given reference set", {
@@ -164,7 +213,7 @@ test_that("fastEmuFit controls Type I error rate, with data-driven reference set
     dat <- simulateData(X = X,
                         B = rbind(bs$b0, bs$b1), distn = "Poisson", mean_count_before_ZI = 50)
     emu_res <- fastEmuFit(Y = dat, X = X, test_kj = data.frame(k = 2, j = 6),
-                                           match_row_names = FALSE)
+                                           match_row_names = FALSE, reference_set_size = 25)
     ps[i] <- emu_res$coef$pval[6]
   }
 

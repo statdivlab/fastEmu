@@ -35,7 +35,7 @@ chooseRefSet <- function(fitted_model,
   p <- nrow(fitted_model$B)
   new_B <- fitted_model$B
   constraint_diff <- constraint_fn(fitted_model$B[k, ref_set])
-  new_B[k, ] <- new_B[k, ] - constraint_diff[k]
+  new_B[k, ] <- new_B[k, ] - constraint_diff
 
   return(list(reference_set = ref_set, constraint_diff = constraint_diff, new_B = new_B))
 }
