@@ -466,6 +466,7 @@ fastEmuFit <- function(reference_set = "data_driven",
     included_categories <- rep(list(aug_set), n_test)
     score_test_hyperparams <- vector(mode = "list", length = n_test)
     null_B <- vector(mode = "list", length = n_test)
+    trackB_list <- vector(mode = "list", length = n_test)
     score_pieces <- vector(mode = "list", length = n_test)
 
     # check if list of starting values for B under the null has been provided
@@ -573,6 +574,9 @@ fastEmuFit <- function(reference_set = "data_driven",
       if ("null_B" %in% names(emuObj)) {
         null_B[[i_test]] <- emuObj$null_B[[1]]
       }
+      if ("trackB_list" %in% names(emuObj)) {
+        trackB_list[[i_test]] <- emuObj$trackB_list[[1]]
+      }
       if ("score_components" %in% names(emuObj)) {
         score_pieces[[i_test]] <- emuObj$score_components[[1]]
       }
@@ -598,6 +602,9 @@ fastEmuFit <- function(reference_set = "data_driven",
     result$score_test_hyperparams <- score_test_hyperparams
     if (!is.null(null_B[[1]])) {
       result$null_B <- null_B
+    }
+    if (!is.null(trackB_list[[1]])) {
+      result$trackB_list <- trackB_list
     }
     if (!is.null(score_pieces[[1]])) {
       result$score_components <- score_pieces
