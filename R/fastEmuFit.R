@@ -136,43 +136,44 @@ fastEmuFit <- function(reference_set = "data_driven",
     constraint_grad_fn <- extra_args$constraint_grad_fn
   }
 
+  check_results <- radEmu:::emuFit_check(Y = Y,
+                                         X = X,
+                                         formula = formula,
+                                         data = data,
+                                         assay_name = assay_name,
+                                         cluster = cluster,
+                                         B_null_list = B_null_list,
+                                         test_kj = test_kj,
+                                         match_row_names = match_row_names,
+                                         verbose = verbose,
+                                         remove_zero_comparison_pvals = remove_zero_comparison_pvals,
+                                         unobserved_taxon_error = unobserved_taxon_error,
+                                         constraint_fn = constraint_fn,
+                                         constraint_grad_fn = constraint_grad_fn,
+                                         constraint_param = constraint_param,
+                                         run_score_tests = run_score_tests)
+  Y <- check_results$Y
+  X <- check_results$X
+  cluster <- check_results$cluster
+  B_null_list <- check_results$B_null_list
+  n <- nrow(X)
+  J <- ncol(Y)
+  p <- ncol(X)
+  old_constraint_fn <- constraint_fn
+  if (length(old_constraint_fn) == 1) {
+    old_constraint_fn <- rep(list(old_constraint_fn), p)
+  }
+  constraint_fn <- check_results$constraint_fn
+  constraint_grad_fn <- check_results$constraint_grad_fn
+  constraint_param <- check_results$constraint_param
+
   if (fastEmu_refit == FALSE & inherits(fitted_model, "fastEmuFit")) {
     if (verbose %in% c("development", TRUE)) {
       message("Skipping estimation and reference set building/checking because a `fastEmuFit` fitted model has been provided. Proceeding immediately with score tests.")
     }
     result <- fitted_model
+    reference_set <- result$reference_set
   } else {
-    check_results <- radEmu:::emuFit_check(Y = Y,
-                                           X = X,
-                                           formula = formula,
-                                           data = data,
-                                           assay_name = assay_name,
-                                           cluster = cluster,
-                                           B_null_list = B_null_list,
-                                           test_kj = test_kj,
-                                           match_row_names = match_row_names,
-                                           verbose = verbose,
-                                           remove_zero_comparison_pvals = remove_zero_comparison_pvals,
-                                           unobserved_taxon_error = unobserved_taxon_error,
-                                           constraint_fn = constraint_fn,
-                                           constraint_grad_fn = constraint_grad_fn,
-                                           constraint_param = constraint_param,
-                                           run_score_tests = run_score_tests)
-    Y <- check_results$Y
-    X <- check_results$X
-    cluster <- check_results$cluster
-    B_null_list <- check_results$B_null_list
-    n <- nrow(X)
-    J <- ncol(Y)
-    p <- ncol(X)
-    old_constraint_fn <- constraint_fn
-    if (length(old_constraint_fn) == 1) {
-      old_constraint_fn <- rep(list(old_constraint_fn), p)
-    }
-    constraint_fn <- check_results$constraint_fn
-    constraint_grad_fn <- check_results$constraint_grad_fn
-    constraint_param <- check_results$constraint_param
-
     # check for valid reference set
     if (is.list(reference_set)) {
       if (length(reference_set) != p) {
@@ -430,8 +431,6 @@ fastEmuFit <- function(reference_set = "data_driven",
     }
   }
 
-  # SARAH - up to here!
-
   if (run_score_tests) {
 
     full_ref_set <- unique(unlist(reference_set))
@@ -481,8 +480,8 @@ fastEmuFit <- function(reference_set = "data_driven",
     }
 
     # set constraint function and gradient over reference set
-    constraint_fn_inf <- constraint_fn_est
-    constraint_grad_fn_inf <- constraint_grad_fn_est
+    constraint_fn_inf <- rep(list(NA), p)
+    constraint_grad_fn_inf <- rep(list(NA), p)
     for (k in 1:p) {
       constraint_fn_inf[[k]] <- (function(k) {
         force(k)

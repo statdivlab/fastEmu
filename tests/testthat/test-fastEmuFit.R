@@ -54,9 +54,9 @@ test_that("estimation is the same whether no fitted object, fastEmuFit fitted ob
   rad_res <- radEmu::emuFit(Y = Y, X = X, run_score_tests = FALSE)
   fast_res <- fastEmuFit(Y = Y, X = X, reference_set_size = 5, run_score_tests = FALSE)
   fast_res_with_rad <- fastEmuFit(Y = Y, X = X, fitted_model = rad_res, run_score_tests = FALSE, reference_set_size = 5)
-  fast_res_with_fast <- suppressMessages(fastEmuFit(Y = Y, X = X, fitted_model = fast_res, run_score_tests = FALSE, reference_set_size = 5))
+  fast_res_with_fast <- suppressMessages(fastEmuFit(Y = Y, X = X, fitted_model = fast_res, test_kj = data.frame(k = 2, j = 2)))
   expect_true(all.equal(fast_res$coef, fast_res_with_rad$coef))
-  expect_true(all.equal(fast_res$coef, fast_res_with_fast$coef))
+  expect_true(all.equal(fast_res$coef[, -(8:9)], fast_res_with_fast$coef[, -(8:9)]))
   expect_true(all.equal(fast_res$reference_set, fast_res_with_rad$reference_set))
   expect_true(all.equal(fast_res$reference_set, fast_res_with_fast$reference_set))
 
