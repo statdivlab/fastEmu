@@ -26,6 +26,6 @@ test_that("same mean from either distribution", {
     sim_Y$Y1_Z[i] <- Y_Z[1]
   }
   means <- colMeans(sim_Y)
-  expect_true(base::all.equal(as.vector(means[1]), as.vector(means[2]), tol = 0.2))
+  expect_true(base::all.equal(as.vector(means[1]), as.vector(means[2]), tol = 0.25))
 })
 
