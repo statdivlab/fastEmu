@@ -3,6 +3,7 @@ name: Run checks on radEmu update
 on:
   repository_dispatch:
     types: [radEmu-update]
+  workflow_dispatch:
 
 jobs:
   test-fastEmu:
