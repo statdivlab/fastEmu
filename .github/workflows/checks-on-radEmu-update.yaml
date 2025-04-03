@@ -8,6 +8,8 @@ on:
 jobs:
   test-fastEmu:
     runs-on: ubuntu-latest
+    env:
+      GITHUB_PAT: ${{ secrets.radEmu_talking_to_fastEmu }}
     steps:
       - uses: actions/checkout@v2
       - name: Set up R
@@ -17,8 +19,6 @@ jobs:
           install.packages("remotes")
           remotes::install_github("statdivlab/radEmu")
         shell: Rscript {0}
-        env:
-          GITHUB_PAT: ${{ secrets.radEmu_talking_to_fastEmu }}
       - name: Check
         env:
           _R_CHECK_CRAN_INCOMING_REMOTE_: false
