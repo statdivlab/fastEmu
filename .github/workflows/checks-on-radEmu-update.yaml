@@ -16,7 +16,6 @@ jobs:
         run: |
           install.packages("remotes")
           remotes::install_github("statdivlab/radEmu")
-          remotes::install_cran("rcmdcheck")
         shell: Rscript {0}
         env:
           GITHUB_PAT: ${{ secrets.radEmu_talking_to_fastEmu }}
@@ -25,5 +24,6 @@ jobs:
           _R_CHECK_CRAN_INCOMING_REMOTE_: false
         run: |
           options(crayon.enabled = TRUE)
+          install.packages("rcmdcheck")
           rcmdcheck::rcmdcheck(args = c("--no-manual", "--as-cran"), error_on = "warning", check_dir = "check")
         shell: Rscript {0}
