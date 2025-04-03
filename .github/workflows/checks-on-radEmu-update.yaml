@@ -5,8 +5,10 @@ on:
     types: [radEmu-update]
   workflow_dispatch:
 
+name: fastEmu-test
+
 jobs:
-  test-fastEmu:
+  fastEmu-test:
     runs-on: ${{ matrix.config.os }}
 
     name: ${{ matrix.config.os }} (${{ matrix.config.r }})
@@ -78,7 +80,4 @@ jobs:
           name: ${{ runner.os }}-r${{ matrix.config.r }}-results
           path: check
           steps:
-      - uses: actions/checkout@mainpendencies = TRUE)
-          remotes::install_cran("rcmdcheck")
-          rcmdcheck::rcmdcheck(args = c("--no-manual", "--as-cran"), error_on = "warning", check_dir = "check")
-        shell: Rscript {0}
+      - uses: actions/checkout@main
