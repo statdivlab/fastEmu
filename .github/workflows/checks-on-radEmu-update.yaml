@@ -16,6 +16,7 @@ jobs:
         run: |
           install.packages("remotes")
           remotes::install_github("statdivlab/radEmu")
+          remotes::install_cran("rcmdcheck")
         shell: Rscript {0}
         env:
           GITHUB_PAT: ${{ secrets.radEmu_talking_to_fastEmu }}
