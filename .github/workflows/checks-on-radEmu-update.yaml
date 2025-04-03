@@ -5,10 +5,8 @@ on:
     types: [radEmu-update]
   workflow_dispatch:
 
-name: fastEmu-test
-
 jobs:
-  fastEmu-test:
+  test-fastEmu-on-radEmu-push:
     runs-on: ${{ matrix.config.os }}
 
     name: ${{ matrix.config.os }} (${{ matrix.config.r }})
