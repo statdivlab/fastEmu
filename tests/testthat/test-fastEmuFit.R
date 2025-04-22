@@ -127,6 +127,12 @@ test_that("p > 2 works, with multiple reference sets", {
   expect_true(all.equal(radEmu:::pseudohuber_center(res2$B[2, res2$reference_set[[2]]], 0.1),
                         0, tolerance = 1e-5))
   expect_true(res2$B[3, 2] == 0)
+
+  # check that we can test a category for k > 2
+  res3 <- fastEmuFit(Y = Y_alt, X = X_alt, test_kj = data.frame(k = 3, j = 4),
+                     reference_set = 1:3, reference_set_size = 5)
+  expect_false(is.na(res3$coef$pval[14]))
+  expect_true(is.na(res3$coef$pval[4]))
 })
 
 test_that("multiple constraint functions", {

@@ -567,10 +567,14 @@ fastEmuFit <- function(reference_set = "data_driven",
       # run score tests
       emuObj <- do.call(emuFit, inf_args)
       cols_rm <- which(names(emuObj$coef) %in% c("category_num", "estimate", "se", "lower", "upper", "zero_comparison"))
-      row_data <- emuObj$coef[j_ind, -cols_rm]
-      ind <- which(result$coef$covariate == row_data$covariate &
-                       result$coef$category == row_data$category)
-      result$coef[ind, names(row_data)] <- row_data
+
+      ind1 <- which(!(is.na(emuObj$coef$pval)))
+      if (length(ind1 > 0)) {
+        row_data <- emuObj$coef[ind1, -cols_rm]
+        ind2 <- which(result$coef$covariate == row_data$covariate &
+                        result$coef$category == row_data$category)
+        result$coef[ind2, names(row_data)] <- row_data
+      }
       included_categories[[i_test]] <- unique(emuObj$coef$category)
       score_test_hyperparams[[i_test]] <- emuObj$score_test_hyperparams
       if ("null_B" %in% names(emuObj)) {
