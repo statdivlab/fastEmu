@@ -95,6 +95,11 @@ fastEmuFit <- function(reference_set = "data_driven",
   }
 
   # start by getting extra arguments
+  if (!("tolerance" %in% names(extra_args))) {
+    tolerance <- 1e-4
+  } else {
+    tolerance <- extra_args$tolerance
+  }
   if (!("assay_name" %in% names(extra_args))) {
     assay_name <- NULL
   } else {
