@@ -1,4 +1,4 @@
-#' Run robust score tests using a reduced version of the radEmu model
+#' Run robust score tests using a reduced version of the radEmu model (deprecated)
 #'
 #' @param constraint_cats a vector of category indices for categories that should be involved in the constraint
 #' and retained in any smaller joint model
@@ -54,6 +54,7 @@
 #'
 #' @export
 #'
+# nocov start
 fastEmuTest <- function(constraint_cats,
                         estimate_full_model = TRUE,
                         Y,
@@ -437,3 +438,4 @@ covariates in formula must be provided.")
 
   return(res)
 }
+# nocov end

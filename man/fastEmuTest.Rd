@@ -2,7 +2,7 @@
 % Please edit documentation in R/fastEmuTest.R
 \name{fastEmuTest}
 \alias{fastEmuTest}
-\title{Run robust score tests using a reduced version of the radEmu model}
+\title{Run robust score tests using a reduced version of the radEmu model (deprecated)}
 \usage{
 fastEmuTest(
   constraint_cats,
@@ -92,5 +92,5 @@ Additionally, if \code{estimate_full_model} is TRUE, the return list will also i
 elements.
 }
 \description{
-Run robust score tests using a reduced version of the radEmu model
+Run robust score tests using a reduced version of the radEmu model (deprecated)
 }
