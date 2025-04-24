@@ -2,15 +2,10 @@
 #'
 #' @param fitted_model The output from \code{radEmu::emuFit} when applied to data with a
 #' constraint over all taxa.
+#' @param k The index of the column in the design matrix for which to choose the reference set.
 #' @param reference_set_size The size of the reference set if it is data-driven, default
 #' is set to \code{50}. We recommend a reference set of size 30-100 for the best balance
 #' of computational efficiency and estimation precision.
-#' @param reference_set_covariate If the reference set is data-driven, which covariates should
-#' it be chosen relative to. By default, this will be all covariates in the model (ignoring
-#' the intercept). However, if a model includes a main covariate that will be tested and several
-#' precision variables, we recommend choosing the reference set with respect to the main
-#' covariate of interest. This argument should be a vector of numbers that correspond to
-#' column indices in the \code{X} design matrix.
 #' @param constraint_fn The constraint function (by default the smoothed median).
 #'
 #' @importFrom utils head
@@ -24,17 +19,12 @@
 #' reference set.
 #'
 chooseRefSet <- function(fitted_model,
+                         k,
                          reference_set_size,
-                         reference_set_covariate,
                          constraint_fn) {
 
-  if (length(reference_set_covariate) == 1) {
-    B_df <- data.frame(index = 1:ncol(fitted_model$B),
-                       l2_lfd = sqrt(fitted_model$B[reference_set_covariate, ]^2))
-  } else {
-    B_df <- data.frame(index = 1:ncol(fitted_model$B),
-                       l2_lfd = sqrt(colSums(fitted_model$B[reference_set_covariate, ]^2)))
-  }
+  B_df <- data.frame(index = 1:ncol(fitted_model$B),
+                    l2_lfd = sqrt(fitted_model$B[k, ]^2))
   B_ord <- order(B_df$l2_lfd)
   B_df <- B_df[B_ord, ]
   if (reference_set_size > nrow(B_df)) {
@@ -43,12 +33,9 @@ chooseRefSet <- function(fitted_model,
   }
   ref_set <- head(B_df$index, reference_set_size)
   p <- nrow(fitted_model$B)
-  constraint_diff <- rep(NA, p)
   new_B <- fitted_model$B
-  for (k in 1:p) {
-    constraint_diff[k] <- constraint_fn(fitted_model$B[k, ref_set])
-    new_B[k, ] <- new_B[k, ] - constraint_diff[k]
-  }
+  constraint_diff <- constraint_fn(fitted_model$B[k, ref_set])
+  new_B[k, ] <- new_B[k, ] - constraint_diff
 
   return(list(reference_set = ref_set, constraint_diff = constraint_diff, new_B = new_B))
 }

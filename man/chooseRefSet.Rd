@@ -4,27 +4,17 @@
 \alias{chooseRefSet}
 \title{A function to choose a data-driven reference set.}
 \usage{
-chooseRefSet(
-  fitted_model,
-  reference_set_size,
-  reference_set_covariate,
-  constraint_fn
-)
+chooseRefSet(fitted_model, k, reference_set_size, constraint_fn)
 }
 \arguments{
 \item{fitted_model}{The output from \code{radEmu::emuFit} when applied to data with a
 constraint over all taxa.}
 
+\item{k}{The index of the column in the design matrix for which to choose the reference set.}
+
 \item{reference_set_size}{The size of the reference set if it is data-driven, default
 is set to \code{50}. We recommend a reference set of size 30-100 for the best balance
 of computational efficiency and estimation precision.}
-
-\item{reference_set_covariate}{If the reference set is data-driven, which covariates should
-it be chosen relative to. By default, this will be all covariates in the model (ignoring
-the intercept). However, if a model includes a main covariate that will be tested and several
-precision variables, we recommend choosing the reference set with respect to the main
-covariate of interest. This argument should be a vector of numbers that correspond to
-column indices in the \code{X} design matrix.}
 
 \item{constraint_fn}{The constraint function (by default the smoothed median).}
 }

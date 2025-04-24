@@ -6,8 +6,7 @@
 \usage{
 fastEmuFit(
   reference_set = "data_driven",
-  reference_set_size = 50,
-  reference_set_covariate = NULL,
+  reference_set_size = 30,
   Y,
   X = NULL,
   formula = NULL,
@@ -18,8 +17,10 @@ fastEmuFit(
   B = NULL,
   fitted_model = NULL,
   refit = TRUE,
+  fastEmu_refit = FALSE,
   return_wald_p = FALSE,
   compute_cis = TRUE,
+  run_score_tests = TRUE,
   verbose = FALSE,
   ...
 )
@@ -32,20 +33,12 @@ the \code{Y} matrix. If a reference set is not provided, by default, this is set
 to \code{data_driven}, and \code{fastEmuFit} will identify a reference set of typical
 taxa of size \code{reference_set_size}. If \code{data_driven_ss} or
 \code{data_driven_thin}, a data-driven reference set will be determined using sample
-splitting or Poisson thinning respectively.}
+splitting or Poisson thinning respectively. The reference set can either be a single
+object, or a list of objects of length \code{p}, for each row of the \code{beta} matrix.}
 
 \item{reference_set_size}{The size of the reference set if it is data-driven, default
-is set to \code{50}. We recommend a reference set of size 30-100 for the best balance
+is set to \code{30}. We recommend a reference set of size 30-100 for the best balance
 of computational efficiency and estimation precision.}
-
-\item{reference_set_covariate}{If the reference set is data-driven, which covariates should
-it be chosen relative to. By default, this will be all covariates in the model (ignoring
-the intercept). However, if a model includes a main covariate that will be tested and several
-precision variables, we recommend choosing the reference set with respect to the main
-covariate of interest. This argument should be a vector of numbers that correspond to
-column indices in the \code{X} design matrix. If you don't know which columns correspond to
-each covariate in your design matrix, run the function \code{radEmu::make_design_matrix()} to
-see the design matrix for your model.}
 
 \item{Y}{an n x J matrix or dataframe of nonnegative observations, or a \code{phyloseq}
 or \code{TreeSummarizedExperiment} object containing an otu table and sample data.}
@@ -70,19 +63,24 @@ Y are treated as independent.}
 \item{B}{starting value of coefficient matrix (p x J). If not provided,
 B will be initiated as a zero matrix.}
 
-\item{fitted_model}{a fitted model produced by a call to fastEmu::fastEmuFit or radEmu::emuFit;
-to be provided if score tests are to be run without refitting the full unrestricted model.
-Default is NULL.}
+\item{fitted_model}{a fitted model produced by a call to \code{fastEmu::fastEmuFit} or
+\code{radEmu::emuFit}; to be provided if score tests are to be run without refitting the
+full unrestricted model. Default is NULL.}
 
-\item{refit}{logical: if B or fitted_model is provided, should full model be fit (TRUE) or
-should fitting step be skipped (FALSE), e.g., if score tests are to be run on an already
-fitted model. Default is TRUE.}
+\item{refit}{logical: if B or fitted_model is provided, in the \code{radEmu} estimation step,
+should estimation be rerun? Default is TRUE.}
+
+\item{fastEmu_refit}{logical: if fitted_model is provided that has been produced by a call to
+\code{fastEmu::fastEmuFit}, should estimation and reference set step be skipped (FALSE), e.g.
+if score tests are to be run on an already fitted \code{fastEmuFit} model. Default is \code{FALSE}.}
 
 \item{return_wald_p}{logical: return p-values from Wald tests? Default is FALSE. These can only be
 returned if \code{estimate_full_model} is TRUE.}
 
 \item{compute_cis}{logical: compute and return Wald CIs? Default is TRUE. These can only be
 returned if \code{estimate_full_model} is TRUE.}
+
+\item{run_score_tests}{logical: perform robust score testing? Default is TRUE.}
 
 \item{verbose}{provide updates as model is being fitted and score tests are run? Defaults to FALSE.}
 
