@@ -46,8 +46,7 @@
     <div id="ref-usage">
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">fastEmuFit</span><span class="op">(</span></span>
 <span>  reference_set <span class="op">=</span> <span class="st">"data_driven"</span>,</span>
-<span>  reference_set_size <span class="op">=</span> <span class="fl">50</span>,</span>
-<span>  reference_set_covariate <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  reference_set_size <span class="op">=</span> <span class="fl">30</span>,</span>
 <span>  <span class="va">Y</span>,</span>
 <span>  X <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  formula <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -58,8 +57,10 @@
 <span>  B <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  fitted_model <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  refit <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  fastEmu_refit <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  return_wald_p <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  compute_cis <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  run_score_tests <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -77,24 +78,14 @@ the <code>Y</code> matrix. If a reference set is not provided, by default, this 
 to <code>data_driven</code>, and <code>fastEmuFit</code> will identify a reference set of typical
 taxa of size <code>reference_set_size</code>. If <code>data_driven_ss</code> or
 <code>data_driven_thin</code>, a data-driven reference set will be determined using sample
-splitting or Poisson thinning respectively.</p></dd>
+splitting or Poisson thinning respectively. The reference set can either be a single
+object, or a list of objects of length <code>p</code>, for each row of the <code>beta</code> matrix.</p></dd>
 
 
 <dt id="arg-reference-set-size">reference_set_size<a class="anchor" aria-label="anchor" href="#arg-reference-set-size"></a></dt>
 <dd><p>The size of the reference set if it is data-driven, default
-is set to <code>50</code>. We recommend a reference set of size 30-100 for the best balance
+is set to <code>30</code>. We recommend a reference set of size 30-100 for the best balance
 of computational efficiency and estimation precision.</p></dd>
-
-
-<dt id="arg-reference-set-covariate">reference_set_covariate<a class="anchor" aria-label="anchor" href="#arg-reference-set-covariate"></a></dt>
-<dd><p>If the reference set is data-driven, which covariates should
-it be chosen relative to. By default, this will be all covariates in the model (ignoring
-the intercept). However, if a model includes a main covariate that will be tested and several
-precision variables, we recommend choosing the reference set with respect to the main
-covariate of interest. This argument should be a vector of numbers that correspond to
-column indices in the <code>X</code> design matrix. If you don't know which columns correspond to
-each covariate in your design matrix, run the function <code><a href="https://statdivlab.github.io/radEmu/reference/make_design_matrix.html" class="external-link">radEmu::make_design_matrix()</a></code> to
-see the design matrix for your model.</p></dd>
 
 
 <dt id="arg-y">Y<a class="anchor" aria-label="anchor" href="#arg-y"></a></dt>
@@ -137,15 +128,20 @@ B will be initiated as a zero matrix.</p></dd>
 
 
 <dt id="arg-fitted-model">fitted_model<a class="anchor" aria-label="anchor" href="#arg-fitted-model"></a></dt>
-<dd><p>a fitted model produced by a call to fastEmu::fastEmuFit or radEmu::emuFit;
-to be provided if score tests are to be run without refitting the full unrestricted model.
-Default is NULL.</p></dd>
+<dd><p>a fitted model produced by a call to <code>fastEmu::fastEmuFit</code> or
+<code><a href="https://statdivlab.github.io/radEmu/reference/emuFit.html" class="external-link">radEmu::emuFit</a></code>; to be provided if score tests are to be run without refitting the
+full unrestricted model. Default is NULL.</p></dd>
 
 
 <dt id="arg-refit">refit<a class="anchor" aria-label="anchor" href="#arg-refit"></a></dt>
-<dd><p>logical: if B or fitted_model is provided, should full model be fit (TRUE) or
-should fitting step be skipped (FALSE), e.g., if score tests are to be run on an already
-fitted model. Default is TRUE.</p></dd>
+<dd><p>logical: if B or fitted_model is provided, in the <code>radEmu</code> estimation step,
+should estimation be rerun? Default is TRUE.</p></dd>
+
+
+<dt id="arg-fastemu-refit">fastEmu_refit<a class="anchor" aria-label="anchor" href="#arg-fastemu-refit"></a></dt>
+<dd><p>logical: if fitted_model is provided that has been produced by a call to
+<code>fastEmu::fastEmuFit</code>, should estimation and reference set step be skipped (FALSE), e.g.
+if score tests are to be run on an already fitted <code>fastEmuFit</code> model. Default is <code>FALSE</code>.</p></dd>
 
 
 <dt id="arg-return-wald-p">return_wald_p<a class="anchor" aria-label="anchor" href="#arg-return-wald-p"></a></dt>
@@ -156,6 +152,10 @@ returned if <code>estimate_full_model</code> is TRUE.</p></dd>
 <dt id="arg-compute-cis">compute_cis<a class="anchor" aria-label="anchor" href="#arg-compute-cis"></a></dt>
 <dd><p>logical: compute and return Wald CIs? Default is TRUE. These can only be
 returned if <code>estimate_full_model</code> is TRUE.</p></dd>
+
+
+<dt id="arg-run-score-tests">run_score_tests<a class="anchor" aria-label="anchor" href="#arg-run-score-tests"></a></dt>
+<dd><p>logical: perform robust score testing? Default is TRUE.</p></dd>
 
 
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>

@@ -44,12 +44,7 @@
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">chooseRefSet</span><span class="op">(</span></span>
-<span>  <span class="va">fitted_model</span>,</span>
-<span>  <span class="va">reference_set_size</span>,</span>
-<span>  <span class="va">reference_set_covariate</span>,</span>
-<span>  <span class="va">constraint_fn</span></span>
-<span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">chooseRefSet</span><span class="op">(</span><span class="va">fitted_model</span>, <span class="va">k</span>, <span class="va">reference_set_size</span>, <span class="va">constraint_fn</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -61,19 +56,14 @@
 constraint over all taxa.</p></dd>
 
 
+<dt id="arg-k">k<a class="anchor" aria-label="anchor" href="#arg-k"></a></dt>
+<dd><p>The index of the column in the design matrix for which to choose the reference set.</p></dd>
+
+
 <dt id="arg-reference-set-size">reference_set_size<a class="anchor" aria-label="anchor" href="#arg-reference-set-size"></a></dt>
 <dd><p>The size of the reference set if it is data-driven, default
 is set to <code>50</code>. We recommend a reference set of size 30-100 for the best balance
 of computational efficiency and estimation precision.</p></dd>
-
-
-<dt id="arg-reference-set-covariate">reference_set_covariate<a class="anchor" aria-label="anchor" href="#arg-reference-set-covariate"></a></dt>
-<dd><p>If the reference set is data-driven, which covariates should
-it be chosen relative to. By default, this will be all covariates in the model (ignoring
-the intercept). However, if a model includes a main covariate that will be tested and several
-precision variables, we recommend choosing the reference set with respect to the main
-covariate of interest. This argument should be a vector of numbers that correspond to
-column indices in the <code>X</code> design matrix.</p></dd>
 
 
 <dt id="arg-constraint-fn">constraint_fn<a class="anchor" aria-label="anchor" href="#arg-constraint-fn"></a></dt>
