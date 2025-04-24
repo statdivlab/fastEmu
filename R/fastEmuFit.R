@@ -572,11 +572,11 @@ fastEmuFit <- function(reference_set = "data_driven",
       inf_args <- c(inf_args, modified_extra_args)
       # run score tests
       emuObj <- do.call(emuFit, inf_args)
-      cols_rm <- which(names(emuObj$coef) %in% c("category_num", "estimate", "se", "lower", "upper", "zero_comparison"))
+      cols_keep <- which(names(emuObj$coef) %in% c("covariate", "category", "score_stat", "pval"))
 
       ind1 <- which(!(is.na(emuObj$coef$pval)))
       if (length(ind1 > 0)) {
-        row_data <- emuObj$coef[ind1, -cols_rm]
+        row_data <- emuObj$coef[ind1, cols_keep]
         ind2 <- which(result$coef$covariate == row_data$covariate &
                         result$coef$category == row_data$category)
         result$coef[ind2, names(row_data)] <- row_data
