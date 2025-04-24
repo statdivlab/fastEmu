@@ -1,3 +1,6 @@
 ^fastEmu\.Rproj$
 ^\.Rproj\.user$
 ^LICENSE\.md$
+^\.github$
+^DS_Store$
+^LISCENSE\.md$
