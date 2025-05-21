@@ -131,12 +131,12 @@ fastEmuFit <- function(reference_set = "data_driven",
     constraint_param <- extra_args$constraint_param
   }
   if (!("constraint_fn" %in% names(extra_args))) {
-    constraint_fn <- (function(x) radEmu:::pseudohuber_center(x, d = constraint_param))
+    constraint_fn <- (function(x) radEmu:::pseudohuber_median(x, d = constraint_param))
   } else {
     constraint_fn <- extra_args$constraint_fn
   }
   if (!("constraint_grad_fn" %in% names(extra_args))) {
-    constraint_grad_fn <- (function(x) radEmu:::dpseudohuber_center_dx(x, d = constraint_param))
+    constraint_grad_fn <- (function(x) radEmu:::dpseudohuber_median_dx(x, d = constraint_param))
   } else {
     constraint_grad_fn <- extra_args$constraint_grad_fn
   }
@@ -538,7 +538,8 @@ fastEmuFit <- function(reference_set = "data_driven",
       inf_args_rm <- which(names(extra_args) %in%
                              c("constraint_fn", "constraint_grad_fn", "constraint_param",
                                "B_null_list", "use_fullmodel_info", "use_fullmodel_cov",
-                               "use_both_cov", "return_both_score_pvals", "match_row_names"))
+                               "use_both_cov", "return_both_score_pvals", "match_row_names",
+                               "tolerance"))
       inf_args <- list(Y = mod_Y,
                        X = X,
                        formula = formula,

@@ -147,12 +147,12 @@ fastEmuTest <- function(constraint_cats,
     # set constraint as pseudo-Huber over constraint categories if there are multiple
     } else {
       constraint_fn_est <- (function(x) {
-        radEmu:::pseudohuber_center(x[constraint_cats], d = .1)
+        radEmu:::pseudohuber_median(x[constraint_cats], d = .1)
       })
       constraint_grad_fn_est <- (function(x) {
         grad <- rep(0, length(x))
         grad[constraint_cats] <-
-          radEmu:::dpseudohuber_center_dx(x[constraint_cats], d = .1)
+          radEmu:::dpseudohuber_median_dx(x[constraint_cats], d = .1)
         return(grad)
       })
     }
@@ -241,12 +241,12 @@ covariates in formula must be provided.")
           # set constraint as pseudo-Huber over constraint categories if there are multiple
         } else {
           constraint_fn_inf <- (function(x) {
-            radEmu:::pseudohuber_center(x[constraint_cats], d = .1)
+            radEmu:::pseudohuber_median(x[constraint_cats], d = .1)
           })
           constraint_grad_fn_inf <- (function(x) {
             grad <- rep(0, length(x))
             grad[constraint_cats] <-
-              radEmu:::dpseudohuber_center_dx(x[constraint_cats], d = .1)
+              radEmu:::dpseudohuber_median_dx(x[constraint_cats], d = .1)
             return(grad)
           })
         }
@@ -262,12 +262,12 @@ covariates in formula must be provided.")
         # set constraint as pseudo-Huber over constraint categories if there are multiple
       } else {
         constraint_fn_inf <- (function(x) {
-          radEmu:::pseudohuber_center(x[1:length(constraint_cats)], d = .1)
+          radEmu:::pseudohuber_median(x[1:length(constraint_cats)], d = .1)
         })
         constraint_grad_fn_inf <- (function(x) {
           grad <- rep(0, length(x))
           grad[1:length(constraint_cats)] <-
-            radEmu:::dpseudohuber_center_dx(x[1:length(constraint_cats)], d = .1)
+            radEmu:::dpseudohuber_median_dx(x[1:length(constraint_cats)], d = .1)
           return(grad)
         })
       }

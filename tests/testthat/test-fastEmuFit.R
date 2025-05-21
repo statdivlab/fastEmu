@@ -68,8 +68,8 @@ test_that("estimation is the same whether no fitted object, fastEmuFit fitted ob
 })
 
 test_that("estimation is the same is use default constraints or provide them with constraint arguments", {
-  constraint_fn <- (function(x) radEmu:::pseudohuber_center(x, d = 0.1))
-  constraint_grad_fn <- (function(x) radEmu:::dpseudohuber_center_dx(x, d = 0.1))
+  constraint_fn <- (function(x) radEmu:::pseudohuber_median(x, d = 0.1))
+  constraint_grad_fn <- (function(x) radEmu:::dpseudohuber_median_dx(x, d = 0.1))
 
   default_res <- fastEmuFit(Y = Y, X = X, reference_set_size = 5, run_score_tests = FALSE)
   set_res <- fastEmuFit(Y = Y, X = X, reference_set_size = 5, run_score_tests = FALSE,
@@ -111,9 +111,9 @@ test_that("p > 2 works, with multiple reference sets", {
   # all data-driven
   res1 <- fastEmuFit(Y = Y_alt, X = X_alt, test_kj = data.frame(k = 2, j = 3), reference_set_size = 5)
   expect_true(all.equal(sort(res1$reference_set[[2]]), which(res1$coef$reference_category[1:10])))
-  expect_true(all.equal(radEmu:::pseudohuber_center(res1$B[1, res1$reference_set[[1]]], 0.1),
+  expect_true(all.equal(radEmu:::pseudohuber_median(res1$B[1, res1$reference_set[[1]]], 0.1),
                         0, tolerance = 1e-5))
-  expect_true(all.equal(radEmu:::pseudohuber_center(res1$B[3, res1$reference_set[[3]]], 0.1),
+  expect_true(all.equal(radEmu:::pseudohuber_median(res1$B[3, res1$reference_set[[3]]], 0.1),
                         0, tolerance = 1e-5))
 
   # some data-driven, some set already
@@ -122,9 +122,9 @@ test_that("p > 2 works, with multiple reference sets", {
   expect_true(length(res2$reference_set[[1]]) == 5)
   expect_true(all.equal(res2$reference_set[[2]], 3:5))
   expect_true(res2$reference_set[[3]] == 2)
-  expect_true(all.equal(radEmu:::pseudohuber_center(res2$B[1, res2$reference_set[[1]]], 0.1),
+  expect_true(all.equal(radEmu:::pseudohuber_median(res2$B[1, res2$reference_set[[1]]], 0.1),
                         0, tolerance = 1e-5))
-  expect_true(all.equal(radEmu:::pseudohuber_center(res2$B[2, res2$reference_set[[2]]], 0.1),
+  expect_true(all.equal(radEmu:::pseudohuber_median(res2$B[2, res2$reference_set[[2]]], 0.1),
                         0, tolerance = 1e-5))
   expect_true(res2$B[3, 2] == 0)
 
@@ -140,9 +140,9 @@ test_that("multiple constraint functions", {
     grad <- rep(1/length(x), length(x))
   }
   res1 <- fastEmuFit(Y = Y, X = X, test_kj = data.frame(k = 2, j = 3), reference_set_size = 5,
-                     constraint_fn = list(radEmu:::pseudohuber_center, mean),
-                     constraint_grad_fn = list(radEmu:::dpseudohuber_center_dx, mean_grad))
-  expect_true(all.equal(radEmu:::pseudohuber_center(res1$B[1, res1$reference_set[[1]]], 0.1), 0,
+                     constraint_fn = list(radEmu:::pseudohuber_median, mean),
+                     constraint_grad_fn = list(radEmu:::dpseudohuber_median_dx, mean_grad))
+  expect_true(all.equal(radEmu:::pseudohuber_median(res1$B[1, res1$reference_set[[1]]], 0.1), 0,
                         tolerance = 1e-6))
   expect_true(all.equal(mean(res1$B[2, res1$reference_set[[2]]]), 0, tolerance = 1e-6))
 })
