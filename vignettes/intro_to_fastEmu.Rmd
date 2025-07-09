@@ -1,0 +1,273 @@
+---
+title: "Introduction to fastEmu"
+author: "Sarah Teichman"
+date: "`r Sys.Date()`" 
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Introduction to fastEmu}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+First, we will install `radEmu` and `fastEmu` if we haven't already.
+
+```{r, eval = FALSE}
+# if (!require("remotes", quietly = TRUE))
+#     install.packages("remotes")
+# 
+# remotes::install_github("statdivlab/radEmu")
+# remotes::install_github("statdivlab/fastEmu")
+```
+
+Next, we can load `radEmu` and `fastEmu`, as well as the `tidyverse` package suite.
+
+```{r, message = FALSE}
+library(radEmu)
+library(fastEmu)
+library(tidyverse)
+```
+
+## Introduction 
+
+This vignette provides an introduction to using `fastEmu`, a companion method to `radEmu`. We will demonstrate this method using a [dataset published by Wirbel et al. (2019)](https://www.nature.com/articles/s41591-019-0406-6). This is a meta-analysis of case-control studies, meaning that Wirbel et al. collected raw sequencing data from studies other researchers conducted and re-analyzed it (in this case, they also collected some new data of their own).
+
+Wirbel et al. published two pieces of data we'll focus on today:
+
+* metadata giving demographics and other information about participants
+* a mOTU (metagenomic OTU) table
+
+## Loading and exploring data 
+
+We'll start by looking at the metadata. 
+
+```{r}
+data("wirbel_sample")
+dim(wirbel_sample)
+head(wirbel_sample)
+```
+
+Let's look at the individual cohorts included in this analysis.
+
+```{r}
+wirbel_sample %>%
+  group_by(Study) %>%
+  summarize(count = n())
+```
+
+In this vignette, we will focus on samples from the Australia cohort. 
+
+```{r}
+wirbel_sample$Group <- factor(wirbel_sample$Group, levels = c("CTR","CRC")) # make group a factor
+wirbel_sample %>%
+  filter(Study == "AT-CRC") %>%
+  group_by(Group) %>%
+  summarize(count = n())
+wirbel_sample_at <- wirbel_sample %>% filter(Study == "AT-CRC")
+```
+
+In the US cohort, we have $46$ cases and $63$ controls. 
+
+Now let's load the mOTU table. 
+
+```{r}
+data("wirbel_otu")
+dim(wirbel_otu)
+# let's check out a subset
+wirbel_otu[1:5, 1:3]
+```
+
+We can see that this table has $566$ samples (just like the metadata) and $845$ mOTUs. Let's subset these samples to those from the Australian cohort. 
+
+```{r}
+wirbel_otu_at <- wirbel_otu[rownames(wirbel_otu) %in% wirbel_sample_at$Sample_ID, ]
+dim(wirbel_otu_at)
+dim(wirbel_sample_at)
+```
+
+Now, we are left with $109$ samples. 
+
+The `radEmu` and `fastEmu` methods can only consider taxa that appear in at least one sample in the dataset. Therefore, we must remove any taxa that don't appear in the Australian cohort. 
+
+```{r}
+sum(colSums(wirbel_otu_at) == 0) # 20 taxa do not appear 
+tax_to_rm <- which(colSums(wirbel_otu_at) == 0)
+wirbel_otu_at_filt <- wirbel_otu_at[, -tax_to_rm]
+dim(wirbel_otu_at_filt)
+```
+
+Now we are left with $109$ samples and $825$ taxa that appear in these samples. 
+
+Finally, we can load taxonomic information. We'll use this information later. 
+
+```{r}
+data(wirbel_taxonomy)
+head(wirbel_taxonomy)
+```
+
+## Fitting a model
+
+We will now fit a model using `emuFit()` from `radEmu`. We are interested in studying the log fold-differences in mOTU abundances across the `Group` covariate, while accounting for `Gender`. In the code below, we estimated these log fold-difference parameters. This will take up to a minute to run, depending on your machine. 
+
+```{r}
+emuMod <- emuFit(Y = wirbel_otu_at_filt, formula = ~ Group + Gender,
+                 data = wirbel_sample_at, run_score_tests = FALSE, 
+                 tolerance = 1e-4)
+```
+
+Let's take a look at our results.
+
+```{r}
+head(emuMod$coef)
+```
+
+For each covariate and mOTU combination we have an estimate, robust standard error, and confidence interval. The estimate in the first row of the results is $-0.395$. We can interpret this as saying that the expected log fold-difference in abundance of Streptococcus anginosus [ref_mOTU_v2_0004] in colorectal cancer cases compared to controls (for participants of the same gender) is $-0.395$ (this corresponds to a fold-difference of $0.67$), relative to the typical log fold-difference across all mOTUs between cases and controls. By typical, we mean that we are comparing each estimated log fold-difference to the approximate median of estimated log fold-differences of all mOTUs in the analysis. When we say approximate median, we refer to a function that is similar to the median but has nicer mathematical properties.
+
+Now, let's look at estimates for the `Group` covariate across all of our mOTUs. 
+
+```{r}
+emuMod_group_tax <- emuMod$coef %>% # add in taxonomy information 
+  filter(covariate == "GroupCRC") %>%
+  left_join(data.frame(wirbel_taxonomy) %>% 
+              mutate(category = rownames(wirbel_taxonomy)), 
+            by = "category")
+emuMod_group_tax %>%
+  arrange(estimate) %>% 
+  mutate(ord = 1:n()) %>%
+  ggplot(aes(x = estimate, xmin = lower, xmax = upper, color = phylum, y = ord)) +
+    geom_point() + geom_errorbar() +
+  labs(y = "", x = "Estimate", color = "Phylum") + 
+  theme_bw() + 
+  ggtitle("Estimates and intervals for all mOTUs") + 
+  theme(axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        plot.title = element_text(hjust = 0.5))
+```
+
+Here, we can see a range of confidence intervals for estimated log fold-differences. While the approximate median of the estimates is $0$ (this is enforced due to the parameter that we are estimating), the estimates range from $-7.88$ to $8.38$. Here we can see that the majority of the mOTUs in our analysis belong to the *Bacillota* phylum. 
+
+Let's now investigate mOTUs from the *Fusobacteriota* phylum. In Wirbel et al.'s analysis, they found some evidence of enrichment members of this phylum. Let's look at the log fold-difference estimates from these mOTUs. 
+
+```{r}
+emuMod_group_tax %>%
+  arrange(estimate) %>% 
+  filter(phylum == "Fusobacteriota") %>%
+  mutate(ord = 1:n()) %>%
+  ggplot(aes(x = estimate, xmin = lower, xmax = upper, y = ord, color = species)) +
+  geom_point() + geom_errorbar() +
+  labs(y = "", x = "Estimate", color = "Species") + 
+  theme_bw() + 
+  ggtitle("Estimates and intervals for Fusobacteriota") + 
+  theme(axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        plot.title = element_text(hjust = 0.5))
+```
+
+## Running hypothesis tests 
+
+### Testing with `radEmu`
+
+Now, that we've explored our estimates, let's move on to running hypothesis tests. Specifically, let's test the null hypotheses that the log fold-difference of abundance in colorectal cases compared controls (accounting for gender) for each *Fusobacteriota* mOTU is equal to the typical log fold-difference between cases and controls across all mOTUs. 
+
+First, we'll pull out the indices of these mOTUs that we would like to test. 
+
+```{r}
+fuso <- emuMod_group_tax %>%
+  filter(phylum == "Fusobacteriota") %>%
+  pull(category)
+fuso_ind <- which(colnames(wirbel_otu_at_filt) %in% fuso)
+```
+
+`radEmu` uses robust score tests for hypothesis testing. These tests are robust to model misspecification and are shown to control the Type I error rate in a variety of simulation settings, including those with small sample sizes and datasets with a large proportion of zeros. However, one downside of these tests is that each test requires a substantial amount of computational time and power, and this is larger for datasets with more taxa. 
+
+Below, we have code to test the nine *Fusobacteriota* mOTUs. On a Mac with 16 GB of memory and the M4 chip, this takes approximately $6.5$ minutes to run. You can either run this below, or load in the results. 
+
+```{r, eval = FALSE}
+radFusTest <- emuFit(Y = wirbel_otu_at_filt, formula = ~ Group + Gender,
+                 data = wirbel_sample_at, fitted_model = emuMod, 
+                 refit = FALSE, compute_cis = FALSE, 
+                 test_kj = data.frame(k = 2, j = fuso_ind),
+                 verbose = T)
+```
+
+```{r}
+radFusTest <- readRDS(system.file("extdata", "radFusTest.rds", package = "fastEmu"))
+radTimes <- c(23, 27, 198, 18, 8, 26, 15, 15, 56) # the times each score test took on my laptop
+```
+
+While $6.5$ minutes isn't very long to wait, you can imagine that testing all $825$ mOTUs would take a long time, and if we had a larger set of mOTUs (several thousand for example), each test would take longer. 
+
+### Testing with `fastEmu`
+
+`fastEmu` is a companion method to `radEmu` that runs robust score tests faster for approximately the same parameters that we estimate and test with `radEmu`. This is especially useful for large datasets, when using `radEmu` is computationally infeasible given your computational resources. 
+
+We will start by comparing the parameters estimated by `fastEmu` to `radEmu`. `fastEmu` works by fitting a simpler model than the one used by `radEmu`, while targeting a very similar parameter. However, in order to define this simpler model, we need a parameter that relies on a subset of taxa, as opposed to one defined relative to the "typical log fold-difference across all taxa." In `fastEmu`, we instead compare to the "typical log fold-difference across taxa in a reference set." Ideally, the approximate median log fold-difference in this reference set would be quite similar to the approximate median log fold-difference in the full analysis. 
+
+In `fastEmu`, the user can either decide which taxa to include in this reference set, or a "data-driven" reference set can be determined. This "data-driven" reference set is a small set of taxa that have the estimated log fold-differences that are closest to the approximate median of estimated log fold-differences from `radEmu`. Below, we can use `fastEmuFit()` to determine a "data-driven" reference set. 
+
+```{r}
+fastMod <- fastEmuFit(Y = wirbel_otu_at_filt, formula = ~ Group + Gender,
+                 data = wirbel_sample_at, fitted_model = emuMod, 
+                 reference_set = "data_driven", run_score_tests = FALSE)
+fastMod$reference_set_names
+fastMod$constraint_diff
+```
+
+Above, we can see the reference sets chosen for each covariate in the model (as well as the intercept). The `constraint_diff` object tells us the difference between the approximate median log fold-difference across all taxa and the approximate median log fold-difference across the reference set, for each covariate. Each of these differences represents a small shift in all parameter estimates from `radEmu` to `fastEmu`. 
+
+Now, we can run our robust score tests for the *Fusobacteriota* mOTUs using `fastEmu`. We'll pass in our fit above `fastMod` in order to use the "data-driven" reference set that we already computed. 
+
+```{r}
+fastFusTest <- fastEmuFit(Y = wirbel_otu_at_filt, formula = ~ Group + Gender,
+                 data = wirbel_sample_at, fitted_model = fastMod, 
+                 test_kj = data.frame(k = 2, j = fuso_ind), verbose = TRUE)
+fastFusTest$coef[fuso_ind,]
+fastTimes <- c(3, 2, 20, 13, 1, 5, 5, 1, 6) # the times each score test took on my laptop
+```
+
+Now, we can compare the test results between `radEmu` and `fastEmu`. 
+
+```{r}
+data.frame(rad = radFusTest$coef$pval[fuso_ind],
+           fast = fastFusTest$coef$pval[fuso_ind]) %>%
+  ggplot(aes(x = rad, y = fast)) + 
+  geom_point() + 
+  labs(x = "radEmu p-value", y = "fastEmu p-value") + 
+  geom_abline(aes(slope = 1, intercept = 0), color = "red") +
+  xlim(c(0, 1)) + ylim(c(0, 1))
+```
+
+We can also compare the times that these took (these are the times from my laptop, you may find the times to run each method to be slightly different). 
+
+```{r}
+radTimes / fastTimes
+sum(radTimes) / sum(fastTimes)
+```
+
+Overall, running `fastEmu` was approximately $7$ times faster than running `radEmu`. For individual score tests, `fastEmu` was between $1.4$ and $15$ times faster. 
+
+```{r}
+fastFusTest$coef[fuso_ind, ]
+```
+
+## Interpreting results 
+
+When we look at the results, we can see that the p-values from the robust score tests range from $0.005$ to $0.363$. There is only one taxon with a p-value below $0.05$, which is Fusobacterium nucleatum s. animalis [ref_mOTU_v2_0776]. 
+
+We can account for multiple testing by adjusting our p-values to control the false discovery rate using the Benjamini-Hochberg procedure (although if you have a larger number of tests, we recommend using the qvalue procedure implemented in the `qvalue` package). 
+
+```{r}
+p.adjust(fastFusTest$coef$pval[fuso_ind], method = "BH")
+```
+
+Here, we can see that at a 5% false discovery rate threshold, we can reject the null hypothesis that the expected log fold-difference in the abundance of Fusobacterium nucleatum s. animalis [ref_mOTU_v2_0776] in colorectal cases compared to controls is equal to the typical log fold-difference across all taxa between cases and controls. 
+
+## Final notes
+
+In this analysis, using `fastEmu` instead of `radEmu` only saved us a few minutes. However, in a large analysis, this may add up. Additionally, the time that `fastEmu` saves will get larger and larger for analyses with more and more taxa. The ideal setting to use `fastEmu` is when `J` (the number of taxa) is quite large and `p` (the number of covariates) is small to moderate. 
