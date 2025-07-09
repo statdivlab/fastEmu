@@ -19,6 +19,7 @@ Suggests:
     TreeSummarizedExperiment,
     lifecycle,
     knitr,
-    rmarkdown
+    rmarkdown,
+    tidyverse
 Config/testthat/edition: 3
 VignetteBuilder: knitr

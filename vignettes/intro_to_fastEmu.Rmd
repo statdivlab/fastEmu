@@ -36,7 +36,7 @@ library(tidyverse)
 
 ## Introduction 
 
-This vignette provides an introduction to using `fastEmu`, a companion method to `radEmu`. We will demonstrate this method using a [dataset published by Wirbel et al. (2019)](https://www.nature.com/articles/s41591-019-0406-6). This is a meta-analysis of case-control studies, meaning that Wirbel et al. collected raw sequencing data from studies other researchers conducted and re-analyzed it (in this case, they also collected some new data of their own).
+This vignette provides an introduction to using `fastEmu`, a companion method to `radEmu`. We will demonstrate this method using a [dataset published by Wirbel et al. (2019)](https://www.nature.com/articles/s41591-019-0406-6). This is a meta-analysis of case-control studies about colorectal cancer. 
 
 Wirbel et al. published two pieces of data we'll focus on today:
 
@@ -131,7 +131,7 @@ For each covariate and mOTU combination we have an estimate, robust standard err
 
 Now, let's look at estimates for the `Group` covariate across all of our mOTUs. 
 
-```{r}
+```{r, fig.height = 6, fig.width = 6}
 emuMod_group_tax <- emuMod$coef %>% # add in taxonomy information 
   filter(covariate == "GroupCRC") %>%
   left_join(data.frame(wirbel_taxonomy) %>% 
@@ -141,7 +141,7 @@ emuMod_group_tax %>%
   arrange(estimate) %>% 
   mutate(ord = 1:n()) %>%
   ggplot(aes(x = estimate, xmin = lower, xmax = upper, color = phylum, y = ord)) +
-    geom_point() + geom_errorbar() +
+  geom_point() + geom_errorbar() +
   labs(y = "", x = "Estimate", color = "Phylum") + 
   theme_bw() + 
   ggtitle("Estimates and intervals for all mOTUs") + 
@@ -152,9 +152,9 @@ emuMod_group_tax %>%
 
 Here, we can see a range of confidence intervals for estimated log fold-differences. While the approximate median of the estimates is $0$ (this is enforced due to the parameter that we are estimating), the estimates range from $-7.88$ to $8.38$. Here we can see that the majority of the mOTUs in our analysis belong to the *Bacillota* phylum. 
 
-Let's now investigate mOTUs from the *Fusobacteriota* phylum. In Wirbel et al.'s analysis, they found some evidence of enrichment members of this phylum. Let's look at the log fold-difference estimates from these mOTUs. 
+Let's now investigate mOTUs from the *Fusobacteriota* phylum. In Wirbel et al.'s analysis, they found some evidence of enrichment for some members of this phylum. Let's look at the log fold-difference estimates for these mOTUs. 
 
-```{r}
+```{r, fig.height = 6, fig.width = 6}
 emuMod_group_tax %>%
   arrange(estimate) %>% 
   filter(phylum == "Fusobacteriota") %>%
@@ -173,7 +173,7 @@ emuMod_group_tax %>%
 
 ### Testing with `radEmu`
 
-Now, that we've explored our estimates, let's move on to running hypothesis tests. Specifically, let's test the null hypotheses that the log fold-difference of abundance in colorectal cases compared controls (accounting for gender) for each *Fusobacteriota* mOTU is equal to the typical log fold-difference between cases and controls across all mOTUs. 
+Now that we've explored our estimates, let's move on to running hypothesis tests. Specifically, let's test the null hypotheses that the expected log fold-difference in abundance in colorectal cases compared controls (accounting for gender) for each *Fusobacteriota* mOTU is equal to the typical log fold-difference between cases and controls across all mOTUs. 
 
 First, we'll pull out the indices of these mOTUs that we would like to test. 
 
@@ -184,16 +184,16 @@ fuso <- emuMod_group_tax %>%
 fuso_ind <- which(colnames(wirbel_otu_at_filt) %in% fuso)
 ```
 
-`radEmu` uses robust score tests for hypothesis testing. These tests are robust to model misspecification and are shown to control the Type I error rate in a variety of simulation settings, including those with small sample sizes and datasets with a large proportion of zeros. However, one downside of these tests is that each test requires a substantial amount of computational time and power, and this is larger for datasets with more taxa. 
+`radEmu` uses robust score tests for hypothesis testing. These tests are robust to model misspecification and are shown to control the Type I error rate in a variety of simulation settings, including those with small sample sizes and datasets with a large proportion of zeros. However, one downside of these tests is that each test requires a substantial amount of computational time, and this gets larger for datasets with more taxa. 
 
 Below, we have code to test the nine *Fusobacteriota* mOTUs. On a Mac with 16 GB of memory and the M4 chip, this takes approximately $6.5$ minutes to run. You can either run this below, or load in the results. 
 
 ```{r, eval = FALSE}
 radFusTest <- emuFit(Y = wirbel_otu_at_filt, formula = ~ Group + Gender,
-                 data = wirbel_sample_at, fitted_model = emuMod, 
-                 refit = FALSE, compute_cis = FALSE, 
-                 test_kj = data.frame(k = 2, j = fuso_ind),
-                 verbose = T)
+                     data = wirbel_sample_at, fitted_model = emuMod, 
+                     refit = FALSE, compute_cis = FALSE, 
+                     test_kj = data.frame(k = 2, j = fuso_ind),
+                     verbose = T)
 ```
 
 ```{r}
@@ -205,16 +205,16 @@ While $6.5$ minutes isn't very long to wait, you can imagine that testing all $8
 
 ### Testing with `fastEmu`
 
-`fastEmu` is a companion method to `radEmu` that runs robust score tests faster for approximately the same parameters that we estimate and test with `radEmu`. This is especially useful for large datasets, when using `radEmu` is computationally infeasible given your computational resources. 
+`fastEmu` is a companion method to `radEmu` that runs robust score tests faster for approximately the same parameters that we estimate and test with `radEmu`. This is especially useful for large datasets, if using `radEmu` is computationally infeasible given your computational resources. 
 
-We will start by comparing the parameters estimated by `fastEmu` to `radEmu`. `fastEmu` works by fitting a simpler model than the one used by `radEmu`, while targeting a very similar parameter. However, in order to define this simpler model, we need a parameter that relies on a subset of taxa, as opposed to one defined relative to the "typical log fold-difference across all taxa." In `fastEmu`, we instead compare to the "typical log fold-difference across taxa in a reference set." Ideally, the approximate median log fold-difference in this reference set would be quite similar to the approximate median log fold-difference in the full analysis. 
+We will start by comparing the parameters estimated by `fastEmu` to `radEmu`. `fastEmu` works by fitting a simpler model than the one used by `radEmu`, while targeting a very similar parameter. In order to define this simpler model, we need a parameter that relies on a subset of taxa, as opposed to one defined relative to the "typical log fold-difference across all taxa." In `fastEmu`, we instead compare to the "typical log fold-difference across taxa in a reference set." Ideally, the approximate median log fold-difference in this reference set would be quite similar to the approximate median log fold-difference in the full analysis. 
 
-In `fastEmu`, the user can either decide which taxa to include in this reference set, or a "data-driven" reference set can be determined. This "data-driven" reference set is a small set of taxa that have the estimated log fold-differences that are closest to the approximate median of estimated log fold-differences from `radEmu`. Below, we can use `fastEmuFit()` to determine a "data-driven" reference set. 
+In `fastEmu`, the user can either decide which taxa to include in this reference set, or a "data-driven" reference set can be determined. This "data-driven" reference set is a small set of taxa that have estimated log fold-differences that are closest to the approximate median of estimated log fold-differences from `radEmu`. Below, we can use `fastEmuFit()` to determine a "data-driven" reference set. 
 
 ```{r}
 fastMod <- fastEmuFit(Y = wirbel_otu_at_filt, formula = ~ Group + Gender,
-                 data = wirbel_sample_at, fitted_model = emuMod, 
-                 reference_set = "data_driven", run_score_tests = FALSE)
+                      data = wirbel_sample_at, fitted_model = emuMod, 
+                      reference_set = "data_driven", run_score_tests = FALSE)
 fastMod$reference_set_names
 fastMod$constraint_diff
 ```
@@ -225,15 +225,23 @@ Now, we can run our robust score tests for the *Fusobacteriota* mOTUs using `fas
 
 ```{r}
 fastFusTest <- fastEmuFit(Y = wirbel_otu_at_filt, formula = ~ Group + Gender,
-                 data = wirbel_sample_at, fitted_model = fastMod, 
-                 test_kj = data.frame(k = 2, j = fuso_ind), verbose = TRUE)
+                          data = wirbel_sample_at, fitted_model = fastMod, 
+                          test_kj = data.frame(k = 2, j = fuso_ind), verbose = TRUE)
 fastFusTest$coef[fuso_ind,]
 fastTimes <- c(3, 2, 20, 13, 1, 5, 5, 1, 6) # the times each score test took on my laptop
 ```
 
+One note is that you don't need to run `radEmu` before `fastEmu`. Instead you could run the below code, which will estimate `radEmu` parameters, generate the "data-drive" reference set, shift estimates, and then run the desired robust score tests. 
+
+```{r, eval = FALSE}
+fastFusTest <- fastEmuFit(Y = wirbel_otu_at_filt, formula = ~ Group + Gender,
+                          data = wirbel_sample_at, reference_set = "data_driven",
+                          test_kj = data.frame(k = 2, j = fuso_ind), verbose = TRUE)
+```
+
 Now, we can compare the test results between `radEmu` and `fastEmu`. 
 
-```{r}
+```{r, fig.height = 6, fig.width = 6}
 data.frame(rad = radFusTest$coef$pval[fuso_ind],
            fast = fastFusTest$coef$pval[fuso_ind]) %>%
   ggplot(aes(x = rad, y = fast)) + 
@@ -242,6 +250,8 @@ data.frame(rad = radFusTest$coef$pval[fuso_ind],
   geom_abline(aes(slope = 1, intercept = 0), color = "red") +
   xlim(c(0, 1)) + ylim(c(0, 1))
 ```
+
+In this plot, we can see that the p-values from `fastEmu` and `radEmu` for these nine tests are nearly identical.
 
 We can also compare the times that these took (these are the times from my laptop, you may find the times to run each method to be slightly different). 
 
