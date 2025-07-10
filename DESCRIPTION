@@ -1,6 +1,6 @@
 Package: fastEmu
 Title: Fast Robust Score Tests for the Simplified Version of Model Implemented in radEmu
-Version: 1.0.0
+Version: 2.0.0
 Authors@R: 
     c(person("Sarah", "Teichman", email = "teichs@uw.edu", role = c("aut", "cre")),
       person("Amy D", "Willis", email = "adwillis@uw.edu", role = "aut", comment = c(ORCID = "0000-0002-2802-4317")))
