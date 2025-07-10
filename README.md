@@ -50,7 +50,7 @@ emu_test <- fastEmuFit(formula = ~ treatment,
 
 ## Documentation 
 
-We additionally have a `pkgdown` [website](https://statdivlab.github.io/fastEmu/) that contains pre-built versions of our function [documentation](https://statdivlab.github.io/fastEmu/reference/index.html) and our vignettes (coming soon).
+We additionally have a `pkgdown` [website](https://statdivlab.github.io/fastEmu/) that contains pre-built versions of our function [documentation](https://statdivlab.github.io/fastEmu/reference/index.html) and a [vignette](https://statdivlab.github.io/fastEmu/articles/intro_to_fastEmu.html).
 
 ## Citation
 
@@ -58,6 +58,6 @@ If you use `fastEmu` for your analysis, check back in soon for a preprint!
 
 ## Bug Reports / Change Requests
 
-If you encounter a bug or would like make a change request, please file it as an issue [here](https://github.com/statdivlab/fastEmu/issues).
+If you encounter a bug or would like make a change request, please file it as an issue [here](https://github.com/statdivlab/fastEmu/intro_to_fastEmu).
 
 If you're a developer, we would love to review your pull requests. 
