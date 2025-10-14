@@ -31,7 +31,7 @@ To download `fastEmu`, use the code below.
 ``` r
 # install.packages("devtools")
 devtools::install_github("statdivlab/fastEmu")
-library(radEmu)
+library(fastEmu)
 ```
 
 ## Use
