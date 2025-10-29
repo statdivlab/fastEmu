@@ -35,6 +35,7 @@
 #' all categories not in the constraint or being tested for each score test, "full" to run tests
 #' with the full joint model (equivalent to radEmu), or "agg" to run a different version of the reduced
 #' model in which all categories not in the constraint or being tested are aggregated together
+#' @param null_fit_alg Which `radEmu` null fitting algorithm to use \code{"fisher_scoring"} or \code{"augmented_lagrangian"}.
 #'
 #' @return A list containing elements 'coef', 'included_categories', and 'score_test_hyperparams'.
 #' 'coef' is a matrix with score test statistics and p-values for all parameters tested. 'Included_categories'
@@ -70,6 +71,7 @@ fastEmuTest <- function(constraint_cats,
                         return_wald_p = FALSE,
                         compute_cis = TRUE,
                         verbose = FALSE,
+                        null_fit_alg = "augmented_lagrangian",
                         ...,
                         model = NULL) {
 
@@ -147,12 +149,12 @@ fastEmuTest <- function(constraint_cats,
     # set constraint as pseudo-Huber over constraint categories if there are multiple
     } else {
       constraint_fn_est <- (function(x) {
-        radEmu:::pseudohuber_median(x[constraint_cats], d = .1)
+        radEmu::pseudohuber_median(x[constraint_cats], d = .1)
       })
       constraint_grad_fn_est <- (function(x) {
         grad <- rep(0, length(x))
         grad[constraint_cats] <-
-          radEmu:::dpseudohuber_median_dx(x[constraint_cats], d = .1)
+          radEmu::dpseudohuber_median_dx(x[constraint_cats], d = .1)
         return(grad)
       })
     }
@@ -241,12 +243,12 @@ covariates in formula must be provided.")
           # set constraint as pseudo-Huber over constraint categories if there are multiple
         } else {
           constraint_fn_inf <- (function(x) {
-            radEmu:::pseudohuber_median(x[constraint_cats], d = .1)
+            radEmu::pseudohuber_median(x[constraint_cats], d = .1)
           })
           constraint_grad_fn_inf <- (function(x) {
             grad <- rep(0, length(x))
             grad[constraint_cats] <-
-              radEmu:::dpseudohuber_median_dx(x[constraint_cats], d = .1)
+              radEmu::dpseudohuber_median_dx(x[constraint_cats], d = .1)
             return(grad)
           })
         }
@@ -262,12 +264,12 @@ covariates in formula must be provided.")
         # set constraint as pseudo-Huber over constraint categories if there are multiple
       } else {
         constraint_fn_inf <- (function(x) {
-          radEmu:::pseudohuber_median(x[1:length(constraint_cats)], d = .1)
+          radEmu::pseudohuber_median(x[1:length(constraint_cats)], d = .1)
         })
         constraint_grad_fn_inf <- (function(x) {
           grad <- rep(0, length(x))
           grad[1:length(constraint_cats)] <-
-            radEmu:::dpseudohuber_median_dx(x[1:length(constraint_cats)], d = .1)
+            radEmu::dpseudohuber_median_dx(x[1:length(constraint_cats)], d = .1)
           return(grad)
         })
       }

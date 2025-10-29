@@ -131,12 +131,12 @@ fastEmuFit <- function(reference_set = "data_driven",
     constraint_param <- extra_args$constraint_param
   }
   if (!("constraint_fn" %in% names(extra_args))) {
-    constraint_fn <- (function(x) radEmu:::pseudohuber_median(x, d = constraint_param))
+    constraint_fn <- (function(x) radEmu::pseudohuber_median(x, d = constraint_param))
   } else {
     constraint_fn <- extra_args$constraint_fn
   }
   if (!("constraint_grad_fn" %in% names(extra_args))) {
-    constraint_grad_fn <- (function(x) radEmu:::dpseudohuber_median_dx(x, d = constraint_param))
+    constraint_grad_fn <- (function(x) radEmu::dpseudohuber_median_dx(x, d = constraint_param))
   } else {
     constraint_grad_fn <- extra_args$constraint_grad_fn
   }
@@ -475,6 +475,7 @@ fastEmuFit <- function(reference_set = "data_driven",
     null_B <- vector(mode = "list", length = n_test)
     trackB_list <- vector(mode = "list", length = n_test)
     score_pieces <- vector(mode = "list", length = n_test)
+    null_diagnostics <- vector(mode = "list", length = n_test)
 
     # check if list of starting values for B under the null has been provided
     if ("B_null_list" %in% names(extra_args)) {
@@ -488,15 +489,29 @@ fastEmuFit <- function(reference_set = "data_driven",
     }
 
     # set constraint function and gradient over reference set
+    vec <- rnorm(J)
+    for (k in 1:p) {
+      if (any(grepl("pseudohuber_median", deparse(body(constraint_fn[[k]]))))) {
+        attr(constraint_fn[[k]], "constraint_type") <- "symmetric_subset:pseudohuber"
+      } else if (isTRUE(all.equal(constraint_fn[[k]](vec), mean(vec)))) {
+        attr(constraint_fn[[k]], "constraint_type") <- "symmetric_subset:mean"
+      } else {
+        attr(constraint_fn[[k]], "constraint_type") <- "other"
+      }
+    }
+
     constraint_fn_inf <- rep(list(NA), p)
     constraint_grad_fn_inf <- rep(list(NA), p)
     for (k in 1:p) {
       constraint_fn_inf[[k]] <- (function(k) {
         force(k)
         ref_ind <- which(aug_set %in% reference_set[[k]])
-        (function(x) {
+        f_out <- (function(x) {
           constraint_fn[[k]](x[ref_ind])
         })
+        attributes(f_out) <- attributes(constraint_fn[[k]])
+        attr(f_out, "reference_set") <- ref_ind
+        f_out
       })(k)
       constraint_grad_fn_inf[[k]] <- (function(k) {
         force(k)
@@ -593,6 +608,9 @@ fastEmuFit <- function(reference_set = "data_driven",
       if ("score_components" %in% names(emuObj)) {
         score_pieces[[i_test]] <- emuObj$score_components[[1]]
       }
+      if ("null_diagnostic_plots" %in% names(emuObj)) {
+        null_diagnostics[[i_test]] <- emuObj$null_diagnostic_plots[[1]]
+      }
       if (verbose %in% c(TRUE, "development")) {
         end <- proc.time() - start
         sec <- round(end[3])
@@ -621,6 +639,9 @@ fastEmuFit <- function(reference_set = "data_driven",
     }
     if (!is.null(score_pieces[[1]])) {
       result$score_components <- score_pieces
+    }
+    if (!is.null(null_diagnostics[[1]])) {
+      result$null_diagnostic_plots <- null_diagnostics
     }
   }
 

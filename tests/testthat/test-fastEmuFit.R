@@ -270,4 +270,56 @@ test_that("fastEmuFit has power that increases with sample size and signal magni
 
 })
 
+test_that("test wirbel data", {
 
+  skip("don't want to test automatically")
+
+  data("wirbel_sample")
+  data("wirbel_otu")
+  data("wirbel_taxonomy")
+  wirbel_phylo <- phyloseq::phyloseq(phyloseq::sample_data(wirbel_sample),
+                                     phyloseq::otu_table(wirbel_otu, taxa_are_rows = FALSE),
+                                     phyloseq::tax_table(wirbel_taxonomy))
+  wirbel_genus <- phyloseq::tax_glom(wirbel_phylo, taxrank = "genus")
+  wirbel_genus_ch <- phyloseq::subset_samples(wirbel_genus, Country == "CHI")
+  zero_taxa <- phyloseq::taxa_sums(wirbel_genus_ch) == 0
+  wirbel_genus_ch <- phyloseq::prune_taxa(zero_taxa == FALSE, wirbel_genus_ch)
+
+  start_sand <- proc.time()
+  wirb_sand2 <- fastEmuFit(formula = ~ Group + Gender +
+                             Age_spline.1 + Age_spline.2 +
+                             Sampling,
+                           Y = wirbel_genus_ch,
+                           compute_cis = FALSE,
+                           test_kj = data.frame(k = 2, j = 1:20),
+                           null_fit_alg = "constraint_sandwich",
+                           verbose = TRUE, null_diagnostic_plots = T,
+                           reference_set_size = 40
+  )
+  end_sand <- proc.time() - start_sand
+  #
+  start_aug <- proc.time()
+  wirb_aug2 <- fastEmuFit(formula = ~ Group + Gender +
+                            Age_spline.1 + Age_spline.2 +
+                            Sampling,
+                          Y = wirbel_genus_ch,
+                          compute_cis = FALSE,
+                          test_kj = data.frame(k = 2, j = 1:20),
+                          null_fit_alg = "augmented_lagrangian",
+                          verbose = TRUE, null_diagnostic_plots = T,
+                          reference_set_size = 40,
+                          maxit_null = 100
+  )
+  end_aug <- proc.time() - start_aug
+  end_aug[3]; end_sand[3]
+
+  lik_sand <- sapply(wirb_sand2$null_diagnostic_plots, function(x) {tail(x$diagnostics_df$lik, 1)})
+  lik_aug <- sapply(wirb_aug2$null_diagnostic_plots, function(x) {tail(x$diagnostics_df$lik, 1)})
+  plot(lik_sand - lik_aug, wirb_sand2$coef$score_stat[1:20] - wirb_aug2$coef$score_stat[1:20])
+  summary(lik_sand - lik_aug)
+  summary(abs(wirb_sand2$coef$score_stat[1:20] - wirb_aug2$coef$score_stat[1:20]))
+
+  # results: ll constrained sandwich - ll augmented lagrangian ranges -3 to 23
+  # test stats difference is max 0.131, median 0.015
+
+})

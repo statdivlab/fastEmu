@@ -20,6 +20,7 @@ fastEmuTest(
   return_wald_p = FALSE,
   compute_cis = TRUE,
   verbose = FALSE,
+  null_fit_alg = "augmented_lagrangian",
   ...,
   model = NULL
 )
@@ -69,6 +70,8 @@ returned if \code{estimate_full_model} is TRUE.}
 returned if \code{estimate_full_model} is TRUE.}
 
 \item{verbose}{provide updates as model is being fitted? Defaults to TRUE.}
+
+\item{null_fit_alg}{Which \code{radEmu} null fitting algorithm to use \code{"fisher_scoring"} or \code{"augmented_lagrangian"}.}
 
 \item{...}{Additional arguments to radEmu:::emuFit. See possible arguments with \code{?radEmu::emuFit}.}
 
