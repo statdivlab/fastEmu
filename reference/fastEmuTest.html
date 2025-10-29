@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">fastEmu</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">2.0.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">2.0.1</span>
       </span>
     </div>
 
@@ -73,6 +73,7 @@
 <span>  return_wald_p <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  compute_cis <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  null_fit_alg <span class="op">=</span> <span class="st">"augmented_lagrangian"</span>,</span>
 <span>  <span class="va">...</span>,</span>
 <span>  model <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -155,6 +156,10 @@ returned if <code>estimate_full_model</code> is TRUE.</p></dd>
 
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
 <dd><p>provide updates as model is being fitted? Defaults to TRUE.</p></dd>
+
+
+<dt id="arg-null-fit-alg">null_fit_alg<a class="anchor" aria-label="anchor" href="#arg-null-fit-alg"></a></dt>
+<dd><p>Which <code>radEmu</code> null fitting algorithm to use <code>"fisher_scoring"</code> or <code>"augmented_lagrangian"</code>.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
