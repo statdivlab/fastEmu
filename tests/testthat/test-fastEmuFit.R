@@ -323,3 +323,9 @@ test_that("test wirbel data", {
   # test stats difference is max 0.131, median 0.015
 
 })
+
+test_that("fastEmuFit() works with a single category reference set", {
+  fit_res <- fastEmuFit(reference_set = 1, Y = Y, X = X, test_kj = data.frame(k = 2, j = 6))
+  # check that above runs without error and that estimate for first taxon is 0
+  expect_equal(fit_res$coef$estimate[1], 0)
+})
