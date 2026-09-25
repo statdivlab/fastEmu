@@ -446,7 +446,7 @@ fastEmuFit <- function(reference_set = "data_driven",
 
     # add to full reference set as needed
     added_cats <- NULL
-    mod_Y <- Y[, full_ref_set]
+    mod_Y <- Y[, full_ref_set, drop = FALSE]
     aug_set <- full_ref_set
     if (sum(rowSums(mod_Y) == 0) > 0) {
       if (verbose == "development") {
@@ -460,7 +460,7 @@ fastEmuFit <- function(reference_set = "data_driven",
       while (sum(rowSums(mod_Y) == 0) > 0) {
         cat <- count_df$id[count_df$rank == curr_rank]
         aug_set <- c(aug_set, cat)
-        mod_Y <- Y[, aug_set]
+        mod_Y <- Y[, aug_set, drop = FALSE]
         added_cats <- c(added_cats, cat)
         curr_rank <- curr_rank + 1
       }
@@ -542,7 +542,7 @@ fastEmuFit <- function(reference_set = "data_driven",
       }
       new_order <- c(ind_keep, (1:ncol(Y))[-ind_keep])
       j_ind <- which(new_order == test_kj$j[i_test])
-      mod_Y <- Y[, ind_keep]
+      mod_Y <- Y[, ind_keep, drop = FALSE]
 
       # use estimated B to start
       upd_result <- result
