@@ -32,7 +32,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">fastEmu</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">2.0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">2.0.2</span>
       </span>
     </div>
 
@@ -74,7 +74,7 @@
                         <h4 data-toc-skip class="author">Sarah
 Teichman</h4>
             
-            <h4 data-toc-skip class="date">2025-10-29</h4>
+            <h4 data-toc-skip class="date">2026-09-25</h4>
       
 
       <div class="hidden name"><code>intro_to_fastEmu.Rmd</code></div>
@@ -311,12 +311,12 @@ a minute to run, depending on your machine.</p>
 <p>For each covariate and mOTU combination we have an estimate, robust
 standard error, and confidence interval. The estimate in the first row
 of the results is
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>−</mo><mn>0.395</mn></mrow><annotation encoding="application/x-tex">-0.395</annotation></semantics></math>.
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>−</mi><mn>0.395</mn></mrow><annotation encoding="application/x-tex">-0.395</annotation></semantics></math>.
 We can interpret this as saying that the expected log fold-difference in
 abundance of Streptococcus anginosus [ref_mOTU_v2_0004] in colorectal
 cancer cases compared to controls (for participants of the same gender)
 is
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>−</mo><mn>0.395</mn></mrow><annotation encoding="application/x-tex">-0.395</annotation></semantics></math>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>−</mi><mn>0.395</mn></mrow><annotation encoding="application/x-tex">-0.395</annotation></semantics></math>
 (this corresponds to a fold-difference of
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mn>0.67</mn><annotation encoding="application/x-tex">0.67</annotation></semantics></math>),
 relative to the typical log fold-difference across all mOTUs between
@@ -344,13 +344,13 @@ across all of our mOTUs.</p>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>axis.text.y <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_blank</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>        axis.ticks.y <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_blank</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>        plot.title <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_text</a></span><span class="op">(</span>hjust <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="intro_to_fastEmu_files/figure-html/unnamed-chunk-13-1.png" width="576"></p>
+<p><img src="intro_to_fastEmu_files/figure-html/unnamed-chunk-13-1.png" class="r-plt" alt="" width="576"></p>
 <p>Here, we can see a range of confidence intervals for estimated log
 fold-differences. While the approximate median of the estimates is
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mn>0</mn><annotation encoding="application/x-tex">0</annotation></semantics></math>
 (this is enforced due to the parameter that we are estimating), the
 estimates range from
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>−</mo><mn>7.88</mn></mrow><annotation encoding="application/x-tex">-7.88</annotation></semantics></math>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>−</mi><mn>7.88</mn></mrow><annotation encoding="application/x-tex">-7.88</annotation></semantics></math>
 to
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mn>8.38</mn><annotation encoding="application/x-tex">8.38</annotation></semantics></math>.
 Here we can see that the majority of the mOTUs in our analysis belong to
@@ -372,7 +372,7 @@ estimates for these mOTUs.</p>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>axis.text.y <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_blank</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>        axis.ticks.y <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_blank</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>        plot.title <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_text</a></span><span class="op">(</span>hjust <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="intro_to_fastEmu_files/figure-html/unnamed-chunk-14-1.png" width="576"></p>
+<p><img src="intro_to_fastEmu_files/figure-html/unnamed-chunk-14-1.png" class="r-plt" alt="" width="576"></p>
 </div>
 <div class="section level2">
 <h2 id="running-hypothesis-tests">Running hypothesis tests<a class="anchor" aria-label="anchor" href="#running-hypothesis-tests"></a>
@@ -566,23 +566,23 @@ reference set that we already computed.</p>
 <span>                          test_kj <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>k <span class="op">=</span> <span class="fl">2</span>, j <span class="op">=</span> <span class="va">fuso_ind</span><span class="op">)</span>, verbose <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Skipping estimation and reference set building/checking because a `fastEmuFit` fitted model has been provided. Proceeding immediately with score tests.</span></span>
 <span><span class="co">#&gt; Running score test 1 of 9.</span></span>
-<span><span class="co">#&gt; Score test 1 of 9 has completed in approximately 5 seconds.</span></span>
+<span><span class="co">#&gt; Score test 1 of 9 has completed in approximately 2 seconds.</span></span>
 <span><span class="co">#&gt; Running score test 2 of 9.</span></span>
-<span><span class="co">#&gt; Score test 2 of 9 has completed in approximately 6 seconds.</span></span>
+<span><span class="co">#&gt; Score test 2 of 9 has completed in approximately 2 seconds.</span></span>
 <span><span class="co">#&gt; Running score test 3 of 9.</span></span>
-<span><span class="co">#&gt; Score test 3 of 9 has completed in approximately 51 seconds.</span></span>
+<span><span class="co">#&gt; Score test 3 of 9 has completed in approximately 2 seconds.</span></span>
 <span><span class="co">#&gt; Running score test 4 of 9.</span></span>
-<span><span class="co">#&gt; Score test 4 of 9 has completed in approximately 31 seconds.</span></span>
+<span><span class="co">#&gt; Score test 4 of 9 has completed in approximately 2 seconds.</span></span>
 <span><span class="co">#&gt; Running score test 5 of 9.</span></span>
 <span><span class="co">#&gt; Score test 5 of 9 has completed in approximately 3 seconds.</span></span>
 <span><span class="co">#&gt; Running score test 6 of 9.</span></span>
-<span><span class="co">#&gt; Score test 6 of 9 has completed in approximately 12 seconds.</span></span>
+<span><span class="co">#&gt; Score test 6 of 9 has completed in approximately 2 seconds.</span></span>
 <span><span class="co">#&gt; Running score test 7 of 9.</span></span>
-<span><span class="co">#&gt; Score test 7 of 9 has completed in approximately 13 seconds.</span></span>
+<span><span class="co">#&gt; Score test 7 of 9 has completed in approximately 2 seconds.</span></span>
 <span><span class="co">#&gt; Running score test 8 of 9.</span></span>
-<span><span class="co">#&gt; Score test 8 of 9 has completed in approximately 4 seconds.</span></span>
+<span><span class="co">#&gt; Score test 8 of 9 has completed in approximately 2 seconds.</span></span>
 <span><span class="co">#&gt; Running score test 9 of 9.</span></span>
-<span><span class="co">#&gt; Score test 9 of 9 has completed in approximately 15 seconds.</span></span>
+<span><span class="co">#&gt; Score test 9 of 9 has completed in approximately 2 seconds.</span></span>
 <span><span class="va">fastFusTest</span><span class="op">$</span><span class="va">coef</span><span class="op">[</span><span class="va">fuso_ind</span>,<span class="op">]</span></span>
 <span><span class="co">#&gt;     covariate                                                category</span></span>
 <span><span class="co">#&gt; 64   GroupCRC Fusobacterium nucleatum s. vincentii [ref_mOTU_v2_0754]</span></span>
@@ -595,15 +595,15 @@ reference set that we already computed.</p>
 <span><span class="co">#&gt; 186  GroupCRC                 Fusobacterium varium [ref_mOTU_v2_4311]</span></span>
 <span><span class="co">#&gt; 727  GroupCRC               unknown Fusobacterium [meta_mOTU_v2_7372]</span></span>
 <span><span class="co">#&gt;     category_num  estimate        se      lower    upper score_stat        pval</span></span>
-<span><span class="co">#&gt; 64            64 1.6223985 0.7229090  0.2055229 3.039274  2.5419415 0.110858395</span></span>
-<span><span class="co">#&gt; 67            67 3.2766977 0.5738113  2.1520481 4.401347  7.7815346 0.005278294</span></span>
-<span><span class="co">#&gt; 68            68 3.2134419 0.5473542  2.1406475 4.286236  3.0827028 0.079128927</span></span>
-<span><span class="co">#&gt; 119          119 1.1324033 0.7549393 -0.3472506 2.612057  1.7469445 0.186261316</span></span>
-<span><span class="co">#&gt; 122          122 6.4280384 0.9647693  4.5371254 8.318951  1.1571196 0.282063704</span></span>
-<span><span class="co">#&gt; 123          123 4.4786902 0.6838872  3.1382960 5.819085  2.1574059 0.141884047</span></span>
-<span><span class="co">#&gt; 185          185 0.5747373 0.6236383 -0.6475713 1.797046  0.8278341 0.362899558</span></span>
-<span><span class="co">#&gt; 186          186 3.4603537 0.8871824  1.7215082 5.199199  1.2330106 0.266822340</span></span>
-<span><span class="co">#&gt; 727          727 2.4687183 0.6246063  1.2445124 3.692924  2.1750993 0.140260466</span></span>
+<span><span class="co">#&gt; 64            64 1.6223985 0.7229090  0.2055229 3.039274  2.5412726 0.110905364</span></span>
+<span><span class="co">#&gt; 67            67 3.2766977 0.5738113  2.1520481 4.401347  7.7821679 0.005276444</span></span>
+<span><span class="co">#&gt; 68            68 3.2134419 0.5473542  2.1406475 4.286236  3.0860246 0.078967514</span></span>
+<span><span class="co">#&gt; 119          119 1.1324033 0.7549393 -0.3472506 2.612057  1.7514701 0.185692027</span></span>
+<span><span class="co">#&gt; 122          122 6.4280384 0.9647693  4.5371254 8.318951  1.1569801 0.282092724</span></span>
+<span><span class="co">#&gt; 123          123 4.4786902 0.6838872  3.1382960 5.819085  2.1574874 0.141876522</span></span>
+<span><span class="co">#&gt; 185          185 0.5747373 0.6236383 -0.6475713 1.797046  0.8286728 0.362656598</span></span>
+<span><span class="co">#&gt; 186          186 3.4603537 0.8871824  1.7215082 5.199199  1.2319097 0.267035959</span></span>
+<span><span class="co">#&gt; 727          727 2.4687183 0.6246063  1.2445124 3.692924  2.1725992 0.140488605</span></span>
 <span><span class="co">#&gt;     reference_category</span></span>
 <span><span class="co">#&gt; 64               FALSE</span></span>
 <span><span class="co">#&gt; 67               FALSE</span></span>
@@ -634,7 +634,7 @@ tests.</p>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">"radEmu p-value"</span>, y <span class="op">=</span> <span class="st">"fastEmu p-value"</span><span class="op">)</span> <span class="op">+</span> </span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_abline.html" class="external-link">geom_abline</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>slope <span class="op">=</span> <span class="fl">1</span>, intercept <span class="op">=</span> <span class="fl">0</span><span class="op">)</span>, color <span class="op">=</span> <span class="st">"red"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/lims.html" class="external-link">xlim</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/lims.html" class="external-link">ylim</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="intro_to_fastEmu_files/figure-html/unnamed-chunk-21-1.png" width="576"></p>
+<p><img src="intro_to_fastEmu_files/figure-html/unnamed-chunk-21-1.png" class="r-plt" alt="" width="576"></p>
 <p>In this plot, we can see that the p-values from <code>fastEmu</code>
 and <code>radEmu</code> for these nine tests are nearly identical.</p>
 <p>We can also compare the times that these took (these are the times
@@ -667,15 +667,15 @@ times faster.</p>
 <span><span class="co">#&gt; 186  GroupCRC                 Fusobacterium varium [ref_mOTU_v2_4311]</span></span>
 <span><span class="co">#&gt; 727  GroupCRC               unknown Fusobacterium [meta_mOTU_v2_7372]</span></span>
 <span><span class="co">#&gt;     category_num  estimate        se      lower    upper score_stat        pval</span></span>
-<span><span class="co">#&gt; 64            64 1.6223985 0.7229090  0.2055229 3.039274  2.5419415 0.110858395</span></span>
-<span><span class="co">#&gt; 67            67 3.2766977 0.5738113  2.1520481 4.401347  7.7815346 0.005278294</span></span>
-<span><span class="co">#&gt; 68            68 3.2134419 0.5473542  2.1406475 4.286236  3.0827028 0.079128927</span></span>
-<span><span class="co">#&gt; 119          119 1.1324033 0.7549393 -0.3472506 2.612057  1.7469445 0.186261316</span></span>
-<span><span class="co">#&gt; 122          122 6.4280384 0.9647693  4.5371254 8.318951  1.1571196 0.282063704</span></span>
-<span><span class="co">#&gt; 123          123 4.4786902 0.6838872  3.1382960 5.819085  2.1574059 0.141884047</span></span>
-<span><span class="co">#&gt; 185          185 0.5747373 0.6236383 -0.6475713 1.797046  0.8278341 0.362899558</span></span>
-<span><span class="co">#&gt; 186          186 3.4603537 0.8871824  1.7215082 5.199199  1.2330106 0.266822340</span></span>
-<span><span class="co">#&gt; 727          727 2.4687183 0.6246063  1.2445124 3.692924  2.1750993 0.140260466</span></span>
+<span><span class="co">#&gt; 64            64 1.6223985 0.7229090  0.2055229 3.039274  2.5412726 0.110905364</span></span>
+<span><span class="co">#&gt; 67            67 3.2766977 0.5738113  2.1520481 4.401347  7.7821679 0.005276444</span></span>
+<span><span class="co">#&gt; 68            68 3.2134419 0.5473542  2.1406475 4.286236  3.0860246 0.078967514</span></span>
+<span><span class="co">#&gt; 119          119 1.1324033 0.7549393 -0.3472506 2.612057  1.7514701 0.185692027</span></span>
+<span><span class="co">#&gt; 122          122 6.4280384 0.9647693  4.5371254 8.318951  1.1569801 0.282092724</span></span>
+<span><span class="co">#&gt; 123          123 4.4786902 0.6838872  3.1382960 5.819085  2.1574874 0.141876522</span></span>
+<span><span class="co">#&gt; 185          185 0.5747373 0.6236383 -0.6475713 1.797046  0.8286728 0.362656598</span></span>
+<span><span class="co">#&gt; 186          186 3.4603537 0.8871824  1.7215082 5.199199  1.2319097 0.267035959</span></span>
+<span><span class="co">#&gt; 727          727 2.4687183 0.6246063  1.2445124 3.692924  2.1725992 0.140488605</span></span>
 <span><span class="co">#&gt;     reference_category</span></span>
 <span><span class="co">#&gt; 64               FALSE</span></span>
 <span><span class="co">#&gt; 67               FALSE</span></span>
@@ -705,8 +705,8 @@ control the false discovery rate using the Benjamini-Hochberg procedure
 qvalue procedure implemented in the <code>qvalue</code> package).</p>
 <div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/stats/p.adjust.html" class="external-link">p.adjust</a></span><span class="op">(</span><span class="va">fastFusTest</span><span class="op">$</span><span class="va">coef</span><span class="op">$</span><span class="va">pval</span><span class="op">[</span><span class="va">fuso_ind</span><span class="op">]</span>, method <span class="op">=</span> <span class="st">"BH"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 0.25539128 0.04750465 0.25539128 0.27939197 0.31732167 0.25539128 0.36289956</span></span>
-<span><span class="co">#&gt; [8] 0.31732167 0.25539128</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 0.2553777 0.0474880 0.2553777 0.2785380 0.3173543 0.2553777 0.3626566</span></span>
+<span><span class="co">#&gt; [8] 0.3173543 0.2553777</span></span></code></pre></div>
 <p>Here, we can see that at a 5% false discovery rate threshold, we can
 reject the null hypothesis that the expected log fold-difference in the
 abundance of Fusobacterium nucleatum s. animalis [ref_mOTU_v2_0776] in
@@ -741,7 +741,7 @@ when <code>J</code> (the number of taxa) is quite large and
 
 <div class="pkgdown">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
       </footer>
