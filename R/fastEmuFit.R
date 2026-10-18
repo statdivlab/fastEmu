@@ -656,6 +656,9 @@ fastEmuFit <- function(reference_set = "data_driven",
   }
   result$coef$reference_category <- ref_set_cat
 
+  # record fastEmuFit call (rather than internal emuFit call)
+  result$call <- call
+
   # return object
   return(structure(result, class = "fastEmuFit"))
 }
